@@ -34,7 +34,7 @@
             </button>
             <div class="account-balance-details">
                 <span>Total Balance</span>
-                <span>{{ current_user.currency }}{{ "%.2f"|format(account.balance) }}</span>
+                <span>{{ current_user.currency }}{{ account.balance|format_number }}</span>
             </div>
             <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
         </div>
@@ -44,18 +44,18 @@
         <div class="summary-stats">
             <div class="stat-card">
                 <h4>Total Income</h4>
-                <p class="positive">{{ current_user.currency }}{{ "%.2f"|format(summary_stats.total_income) }}</p>
+                <p class="positive">{{ current_user.currency }}{{ summary_stats.total_income|format_number }}</p>
                 <small>Last 6 months</small>
             </div>
             <div class="stat-card">
                 <h4>Total Expense</h4>
-                <p class="negative">{{ current_user.currency }}{{ "%.2f"|format(summary_stats.total_expense) }}</p>
+                <p class="negative">{{ current_user.currency }}{{ summary_stats.total_expense|format_number }}</p>
                 <small>Last 6 months</small>
             </div>
             <div class="stat-card">
                 <h4>Net Flow</h4>
                 <p class="{% if summary_stats.net_flow >= 0 %}positive{% else %}negative{% endif %}">
-                    {{ current_user.currency }}{{ "%.2f"|format(summary_stats.net_flow) }}
+                    {{ current_user.currency }}{{ summary_stats.net_flow|format_number }}
                 </p>
                 <small>Last 6 months</small>
             </div>
@@ -81,7 +81,7 @@
                     </div>
                     <span class="transaction-date-only">{{ t.Transaction.date.strftime('%Y-%m-%d') }}</span>
                     <div class="transaction-amount {% if t.Transaction.amount >= 0 %}positive{% else %}negative{% endif %}">
-                        {{ current_user.currency }}{{ "{:+.2f}".format(t.Transaction.amount).replace('+', '+ ') }}
+                        {{ current_user.currency }}{% if t.Transaction.amount >= 0 %}+ {% else %}- {% endif %}{{ (t.Transaction.amount|abs)|format_number }}
                     </div>
                     <div class="transaction-actions">
                         <button class="icon-btn edit-transaction-btn" title="Edit Transaction"

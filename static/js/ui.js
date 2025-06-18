@@ -1,6 +1,16 @@
 let state = { accounts: [], categories: [] };
 let expenseChart = null;
 
+function formatNumber(number) {
+    if (typeof number !== 'number') {
+        number = 0;
+    }
+    return new Intl.NumberFormat('de-DE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(number);
+}
+
 export function getState() {
     return state;
 }
@@ -36,7 +46,7 @@ function createAccountElement(account, currencySymbol) {
 
     const transactionsList = account.transactions.map(t => {
         const amountClass = t.amount >= 0 ? 'positive' : 'negative';
-        const formattedAmount = `${t.amount >= 0 ? '+' : ''}${Math.abs(t.amount).toFixed(2)}`;
+        const formattedAmount = `${t.amount >= 0 ? '+' : ''}${formatNumber(Math.abs(t.amount))}`;
         const transactionDate = new Date(t.date).toLocaleDateString();
 
         return `
@@ -70,7 +80,7 @@ function createAccountElement(account, currencySymbol) {
                     <span>${account.name}</span>
                 </h3>
             </a>
-            <div class="account-balance">${currencySymbol}${account.balance.toFixed(2)}</div>
+            <div class="account-balance">${currencySymbol}${formatNumber(account.balance)}</div>
             <div class="account-actions">
                 <button class="icon-btn add-transaction-to-account-btn" data-account-id="${account.id}" title="Add Transaction">
                     <span class="material-icons-outlined">add</span>
@@ -114,14 +124,14 @@ export function renderAccounts(accounts, accountsContainer, noResultsMessage, cu
 export function renderSummary(summaryData, currencySymbol) {
     const { summaryStats, recentTransactions, expenseBreakdown } = summaryData;
 
-    document.querySelector('#total-income-card p').textContent = `${currencySymbol}${summaryStats.totalIncome.toFixed(2)}`;
-    document.querySelector('#total-expense-card p').textContent = `${currencySymbol}${summaryStats.totalExpense.toFixed(2)}`;
-    document.querySelector('#total-balance-card p').textContent = `${currencySymbol}${summaryStats.totalBalance.toFixed(2)}`;
+    document.querySelector('#total-income-card p').textContent = `${currencySymbol}${formatNumber(summaryStats.totalIncome)}`;
+    document.querySelector('#total-expense-card p').textContent = `${currencySymbol}${formatNumber(summaryStats.totalExpense)}`;
+    document.querySelector('#total-balance-card p').textContent = `${currencySymbol}${formatNumber(summaryStats.totalBalance)}`;
 
     const recentList = document.getElementById('recent-transactions-list');
     recentList.innerHTML = recentTransactions.map(t => {
          const amountClass = t.amount >= 0 ? 'positive' : 'negative';
-         const formattedAmount = `${t.amount >= 0 ? '+' : ''}${t.amount.toFixed(2)}`;
+         const formattedAmount = t.amount >= 0 ? `+${formatNumber(t.amount)}` : formatNumber(t.amount);
          const transactionDate = new Date(t.date).toLocaleDateString();
          return `
             <li class="transaction-item">
@@ -265,7 +275,7 @@ export function renderRecurringTransactions(container, items, currencySymbol, ed
         if (!item.is_active) li.classList.add('inactive');
         
         const amountClass = item.amount >= 0 ? 'positive' : 'negative';
-        const formattedAmount = `${currencySymbol}${Math.abs(item.amount).toFixed(2)}`;
+        const formattedAmount = `${currencySymbol}${formatNumber(Math.abs(item.amount))}`;
         const nextDueDate = new Date(item.next_due_date).toLocaleDateString();
 
         li.innerHTML = `

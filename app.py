@@ -127,6 +127,20 @@ def process_recurring_transactions(user_id):
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
+@app.template_filter()
+def format_number(value):
+    if value is None:
+        value = 0.0
+    try:
+        value = float(value)
+        s = '{:,.2f}'.format(value)
+        return s.replace(',', 'X').replace('.', ',').replace('X', '.')
+    except (ValueError, TypeError):
+        if isinstance(value, str):
+            return value
+        return '0,00'
+app.jinja_env.filters['format_number'] = format_number
+
 @app.before_request
 def check_for_setup():
     if not User.query.first() and request.endpoint not in ['setup', 'static', 'account_details']:
