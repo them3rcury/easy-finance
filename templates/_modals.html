@@ -1,0 +1,210 @@
+<div id="error-toast" class="error-toast"></div>
+
+<div id="add-account-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close-btn">&times;</span>
+        <h2>Add New Account</h2>
+        <div class="modal-form">
+            <input type="text" id="new-account-name-modal" placeholder="Account name" required>
+            <select id="new-account-type-modal" class="settings-input">
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="cash">Cash</option>
+                <option value="investment">Investment</option>
+            </select>
+            <input type="number" id="new-account-balance-modal" placeholder="Initial Balance" value="0.00" step="0.01" required>
+            <button id="add-account-btn-modal" class="button-primary">Add Account</button>
+        </div>
+    </div>
+</div>
+<div id="edit-account-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close-btn">&times;</span>
+        <h2>Edit Account</h2>
+        <div class="modal-form">
+            <input type="hidden" id="edit-account-id-modal">
+            <input type="text" id="edit-account-name-modal" placeholder="New account name" required>
+            <select id="edit-account-type-modal" class="settings-input">
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="cash">Cash</option>
+                <option value="investment">Investment</option>
+            </select>
+            <button id="save-account-changes-btn" class="button-primary">Save Changes</button>
+        </div>
+    </div>
+</div>
+<div id="add-transaction-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close-btn">&times;</span>
+        <h2>Add New Transaction</h2>
+        <div class="modal-form">
+            <input type="hidden" id="add-transaction-account-id-modal">
+            <div class="radio-group">
+                <input type="radio" id="type-expense-add" name="transaction-type-add" value="expense" checked>
+                <label for="type-expense-add">Expense</label>
+                <input type="radio" id="type-income-add" name="transaction-type-add" value="income">
+                <label for="type-income-add">Income</label>
+            </div>
+            <input type="text" id="new-transaction-description-modal" placeholder="Description" required>
+            <input type="number" id="new-transaction-amount-modal" placeholder="Amount" step="0.01" min="0" required>
+            <select id="new-transaction-category-select" class="settings-input"></select>
+            <button id="add-transaction-btn-modal" class="button-primary">Add Transaction</button>
+        </div>
+    </div>
+</div>
+<div id="edit-transaction-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close-btn">&times;</span>
+        <h2>Edit Transaction</h2>
+        <div class="modal-form">
+            <input type="hidden" id="edit-transaction-id-modal">
+             <div class="radio-group">
+                <input type="radio" id="type-expense-edit" name="transaction-type-edit" value="expense">
+                <label for="type-expense-edit">Expense</label>
+                <input type="radio" id="type-income-edit" name="transaction-type-edit" value="income">
+                <label for="type-income-edit">Income</label>
+            </div>
+            <input type="text" id="edit-transaction-description-modal" placeholder="Description" required>
+            <input type="number" id="edit-transaction-amount-modal" placeholder="Amount" step="0.01" min="0" required>
+            <select id="edit-transaction-category-select" class="settings-input"></select>
+            <button id="save-transaction-changes-btn" class="button-primary">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<div id="manage-categories-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close-btn">&times;</span>
+        <h2>Manage Categories</h2>
+        <div class="category-tabs">
+            <button class="category-tab-btn active" data-tab="expense">Expenses</button>
+            <button class="category-tab-btn" data-tab="income">Income</button>
+        </div>
+
+        <div id="expense-tab-content" class="category-tab-content active">
+            <div class="empty-list-message">
+                <span class="material-icons-outlined">category</span>
+                <p>No expense categories yet.</p>
+            </div>
+            <ul id="expense-categories-list" class="category-list"></ul>
+            <div class="add-category-form">
+                <input type="text" class="new-category-name" placeholder="Add new expense category...">
+                <button class="add-category-btn button-primary" data-type="expense">Add</button>
+            </div>
+        </div>
+
+        <div id="income-tab-content" class="category-tab-content">
+            <div class="empty-list-message">
+                <span class="material-icons-outlined">paid</span>
+                <p>No income categories yet.</p>
+            </div>
+            <ul id="income-categories-list" class="category-list"></ul>
+             <div class="add-category-form">
+                <input type="text" class="new-category-name" placeholder="Add new income category...">
+                <button class="add-category-btn button-primary" data-type="income">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="manage-recurring-modal" class="modal">
+    <div class="modal-content wide">
+        <span class="modal-close-btn">&times;</span>
+        <h2>Recurring Transactions</h2>
+        <div class="recurring-container">
+            <div class="recurring-list-section">
+                <h3>Active Recurring Items</h3>
+                <ul id="recurring-transactions-list" class="recurring-list">
+                </ul>
+                <div class="empty-list-message" id="recurring-empty-message">
+                    <span class="material-icons-outlined">event_repeat</span>
+                    <p>No recurring transactions found.</p>
+                </div>
+            </div>
+            <div class="recurring-form-section">
+                <h3 id="recurring-form-title">Add New Recurring Transaction</h3>
+                <div class="modal-form">
+                    <input type="hidden" id="recurring-transaction-id">
+                    <div class="radio-group">
+                        <input type="radio" id="type-expense-recurring" name="transaction-type-recurring" value="expense" checked>
+                        <label for="type-expense-recurring">Expense</label>
+                        <input type="radio" id="type-income-recurring" name="transaction-type-recurring" value="income">
+                        <label for="type-income-recurring">Income</label>
+                    </div>
+                    <input type="text" id="recurring-name" placeholder="Name (e.g., Netflix Subscription)" required>
+                    <input type="number" id="recurring-amount" placeholder="Amount" step="0.01" min="0" required>
+                    <select id="recurring-account-select" class="settings-input" required></select>
+                    <select id="recurring-category-select" class="settings-input"></select>
+                    <select id="recurring-frequency-select" class="settings-input" required>
+                        <option value="" disabled selected>Select frequency</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                    <div class="date-inputs">
+                        <div>
+                            <label for="recurring-start-date">Start Date</label>
+                            <input type="date" id="recurring-start-date" required>
+                        </div>
+                        <div>
+                            <label for="recurring-end-date">End Date (optional)</label>
+                            <input type="date" id="recurring-end-date">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                         <button id="save-recurring-btn" class="button-primary">Add Recurring Transaction</button>
+                         <button id="cancel-recurring-edit-btn" class="button-secondary" style="display: none;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="settings-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close-btn">&times;</span>
+        <h2>Settings</h2>
+        <div class="modal-form">
+            <div class="setting-row">
+                <label for="dashboard-title-input">Dashboard Title</label>
+                <input type="text" id="dashboard-title-input" class="settings-input">
+            </div>
+
+            <div class="setting-row">
+                <label for="currency-selector-input">Currency</label>
+                <div id="currency-selector" class="currency-selector">
+                    <input type="text" id="currency-selector-input" class="settings-input" autocomplete="off">
+                    <div id="currency-dropdown" class="currency-dropdown">
+                        </div>
+                </div>
+            </div>
+            <div class="setting-row">
+                <label for="density-setting">Layout Density</label>
+                <div class="radio-group" id="density-setting">
+                    <input type="radio" id="density-compact" name="density" value="compact">
+                    <label for="density-compact">Compact</label>
+                    <input type="radio" id="density-default" name="density" value="default" checked>
+                    <label for="density-default">Default</label>
+                    <input type="radio" id="density-comfortable" name="density" value="comfortable">
+                    <label for="density-comfortable">Comfortable</label>
+                </div>
+            </div>
+            <div class="setting-row">
+                <label for="color-scheme-setting">Color Scheme</label>
+                <div class="radio-group" id="color-scheme-setting">
+                    <input type="radio" id="color-default" name="color-scheme" value="default" checked>
+                    <label for="color-default">Default</label>
+                    <input type="radio" id="color-mint" name="color-scheme" value="mint">
+                    <label for="color-mint">Mint</label>
+                    <input type="radio" id="color-crimson" name="color-scheme" value="crimson">
+                    <label for="color-crimson">Crimson</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

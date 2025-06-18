@@ -1,0 +1,117 @@
+.details-page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-areas:
+        "summary chart"
+        "transactions transactions";
+}
+
+.summary-stats {
+    grid-area: summary;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.chart-container.account {
+    grid-area: chart;
+    padding: 2rem;
+    height: auto;
+    min-height: 400px;
+}
+
+.transactions-container.account {
+    grid-area: transactions;
+    padding: 1.25rem;
+}
+
+.stat-card {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px var(--shadow-color);
+    animation: fadeInSlideUp 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+.stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation-delay: 0.2s; }
+
+.stat-card h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--muted-foreground);
+}
+
+.stat-card p {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.stat-card small {
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.transactions-list-detailed .transaction-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto auto;
+    gap: 1rem;
+    align-items: center;
+}
+
+.transaction-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--secondary);
+}
+
+.transaction-item:hover .transaction-icon {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.transaction-item .negative:hover .transaction-icon {
+    background-color: var(--destructive);
+}
+
+.transaction-amount.positive, .stat-card .positive {
+    color: var(--primary);
+}
+
+html[data-theme='light'] .transaction-amount.positive,
+html[data-theme='light'] .stat-card.positive {
+    color: hsl(140, 50%, 45%);
+}
+
+.transaction-amount.negative, .stat-card .negative {
+    color: var(--destructive);
+}
+
+.transaction-date-only {
+    font-size: 14px;
+    color: var(--muted-foreground);
+    font-feature-settings: "tnum";
+}
+
+@media (max-width: 900px) {
+    .details-page-container {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "summary"
+            "chart"
+            "transactions";
+    }
+}

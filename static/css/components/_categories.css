@@ -1,0 +1,138 @@
+.category-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.category-tab-btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--muted-foreground);
+    font-weight: 600;
+    font-size: 15px;
+    position: relative;
+    transition: color 0.2s ease-in-out;
+}
+
+.category-tab-btn:hover {
+    color: var(--foreground);
+}
+
+.category-tab-btn.active {
+    color: var(--primary);
+}
+
+.category-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--primary);
+    border-radius: 2px;
+}
+
+.category-tab-content {
+    display: none;
+}
+
+.category-tab-content.active {
+    display: block;
+    animation: fadeInSlideUp 0.4s ease-out forwards;
+}
+
+.category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-height: 100px;
+}
+
+.category-item {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--secondary);
+    border-left: 3px solid var(--border);
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--foreground);
+    border-radius: var(--radius);
+    transition: all 0.2s ease-in-out;
+}
+
+.category-item:hover {
+    border-left-color: var(--primary);
+    background-color: hsl(from var(--secondary) h s l / 1.5);
+    transform: translateY(-2px);
+}
+
+.category-item .delete-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: auto;
+    color: var(--muted-foreground);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease-in-out;
+}
+
+.category-item .delete-btn .material-icons-outlined {
+    font-size: 20px;
+}
+
+.category-item:hover .delete-btn {
+    opacity: 1;
+}
+
+.category-item .delete-btn:hover {
+    color: var(--destructive);
+    background-color: hsla(0, 72%, 51%, 0.1);
+}
+
+.add-category-form {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.add-category-form input {
+    flex-grow: 1;
+}
+
+.empty-list-message {
+    display: none;
+    width: 100%;
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--muted-foreground);
+}
+
+.empty-list-message p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.empty-list-message .material-icons-outlined {
+    font-size: 48px;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}

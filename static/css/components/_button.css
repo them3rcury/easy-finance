@@ -1,0 +1,95 @@
+button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease-in-out;
+}
+
+button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px hsla(221, 83%, 60%, 0.3);
+}
+
+.button-primary {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: 0 2px 4px hsla(0, 0%, 0%, 0.2);
+}
+
+.button-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px hsla(0, 0%, 0%, 0.3);
+    background: var(--ring);
+}
+
+html[data-theme='light'] .button-primary {
+    background-image: linear-gradient(to right, hsl(221, 83%, 65%), var(--primary));
+    box-shadow: 0 2px 4px hsla(221, 83%, 53%, 0.2);
+}
+
+html[data-theme='light'] .button-primary:hover {
+    box-shadow: 0 4px 8px hsla(221, 83%, 53%, 0.3);
+}
+
+.logout-button {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+    padding: 8px 15px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.logout-button:hover {
+    background-color: var(--border);
+}
+
+.icon-btn {
+    background-color: transparent;
+    color: var(--muted-foreground);
+    border-radius: var(--radius);
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    opacity: 0.8;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid var(--border);
+}
+
+.icon-btn .material-icons-outlined {
+    transition: transform 0.2s ease-in-out;
+}
+
+.icon-btn:hover {
+    background-color: var(--secondary);
+    opacity: 1;
+    border-color: var(--ring);
+}
+
+.icon-btn:hover .material-icons-outlined {
+    transform: scale(1.1);
+}
+
+.delete-btn:hover {
+    background-color: var(--destructive);
+    color: var(--destructive-foreground);
+}
+
+#theme-switcher .icon-dark-mode,
+html[data-theme='dark'] #theme-switcher .icon-light-mode {
+    display: none;
+}
+
+#theme-switcher .icon-light-mode,
+html[data-theme='dark'] #theme-switcher .icon-dark-mode {
+    display: block;
+}

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-color-scheme="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ account.name }} - Account Details</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const savedColorScheme = localStorage.getItem('dashboardColorScheme') || 'default';
+            document.documentElement.setAttribute('data-color-scheme', savedColorScheme);
+        })();
+    </script>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('dashboard') }}" class="back-button icon-btn" title="Back to Dashboard">
+            <span class="material-icons-outlined">arrow_back</span>
+        </a>
+        <h1>{{ account.name }}</h1>
+        <div class="header-actions">
+             <button id="open-add-transaction-modal-btn" class="button-primary" data-account-id="{{ account.id }}">
+                <span class="material-icons-outlined">add</span>
+                Add Transaction
+            </button>
+            <div class="account-balance-details">
+                <span>Total Balance</span>
+                <span>{{ current_user.currency }}{{ "%.2f"|format(account.balance) }}</span>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+        </div>
+    </header>
+
+    <main class="details-page-container">
+        <div class="summary-stats">
+            <div class="stat-card">
+                <h4>Total Income</h4>
+                <p class="positive">{{ current_user.currency }}{{ "%.2f"|format(summary_stats.total_income) }}</p>
+                <small>Last 6 months</small>
+            </div>
+            <div class="stat-card">
+                <h4>Total Expense</h4>
+                <p class="negative">{{ current_user.currency }}{{ "%.2f"|format(summary_stats.total_expense) }}</p>
+                <small>Last 6 months</small>
+            </div>
+            <div class="stat-card">
+                <h4>Net Flow</h4>
+                <p class="{% if summary_stats.net_flow >= 0 %}positive{% else %}negative{% endif %}">
+                    {{ current_user.currency }}{{ "%.2f"|format(summary_stats.net_flow) }}
+                </p>
+                <small>Last 6 months</small>
+            </div>
+        </div>
+
+        <div class="chart-container account">
+             <canvas id="transactionChart"></canvas>
+        </div>
+
+        <div class="transactions-container account">
+            <div class="account-header">
+                <h3><span class="material-icons-outlined">receipt_long</span><span>Recent Transactions</span></h3>
+            </div>
+            <ul class="transactions-list transactions-list-detailed">
+                {% for t in transactions %}
+                <li class="transaction-item">
+                    <div class="transaction-icon">
+                        <span class="material-icons-outlined">{% if t.Transaction.amount >= 0 %}trending_up{% else %}trending_down{% endif %}</span>
+                    </div>
+                    <div class="transaction-details">
+                        <span class="transaction-description">{{ t.Transaction.description }}</span>
+                        <span class="transaction-date">{{ t.category_name or 'Uncategorized' }}</span>
+                    </div>
+                    <span class="transaction-date-only">{{ t.Transaction.date.strftime('%Y-%m-%d') }}</span>
+                    <div class="transaction-amount {% if t.Transaction.amount >= 0 %}positive{% else %}negative{% endif %}">
+                        {{ current_user.currency }}{{ "{:+.2f}".format(t.Transaction.amount).replace('+', '+ ') }}
+                    </div>
+                    <div class="transaction-actions">
+                        <button class="icon-btn edit-transaction-btn" title="Edit Transaction"
+                                data-transaction-id="{{ t.Transaction.id }}"
+                                data-transaction-description="{{ t.Transaction.description | urlencode }}"
+                                data-transaction-amount="{{ t.Transaction.amount }}"
+                                data-transaction-category-id="{{ t.Transaction.category_id }}">
+                            <span class="material-icons-outlined">edit</span>
+                        </button>
+                        <button class="icon-btn delete-btn delete-transaction-btn" title="Delete Transaction"
+                                data-transaction-id="{{ t.Transaction.id }}">
+                            <span class="material-icons-outlined">delete</span>
+                        </button>
+                    </div>
+                </li>
+                {% else %}
+                <li class="empty-list-message" style="display: block;">No transactions found for this account.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </main>
+
+    {% include '_modals.html' %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartCanvas = document.getElementById('transactionChart');
+            if (!chartCanvas) return;
+
+            const ctx = chartCanvas.getContext('2d');
+            const chartData = JSON.parse('{{ chart_data | tojson | safe }}');
+            
+            const styles = getComputedStyle(document.documentElement);
+            const primaryColor = styles.getPropertyValue('--primary').trim();
+            const destructiveColor = styles.getPropertyValue('--destructive').trim();
+            const gridColor = styles.getPropertyValue('--border').trim();
+            const textColor = styles.getPropertyValue('--muted-foreground').trim();
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: chartData.income,
+                            backgroundColor: primaryColor,
+                            borderColor: primaryColor,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Expense',
+                            data: chartData.expense,
+                            backgroundColor: destructiveColor,
+                            borderColor: destructiveColor,
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: 'transparent' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: textColor }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

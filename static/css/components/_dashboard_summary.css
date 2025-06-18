@@ -1,0 +1,58 @@
+.dashboard-summary-grid {
+    max-width: 1400px;
+    margin: 0 auto 40px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.summary-cards-container {
+    grid-column: span 3;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+#recent-transactions-container {
+    grid-column: span 2;
+}
+
+#expense-breakdown-container {
+    grid-column: span 1;
+}
+
+#recent-transactions-container h4,
+#expense-breakdown-container h4 {
+    margin: 0;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#recent-transactions-list {
+    max-height: 308px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.chart-wrapper {
+    height: 300px;
+    position: relative;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-summary-grid {
+        grid-template-columns: 1fr;
+    }
+     .dashboard-summary-grid > * {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .summary-cards-container {
+        grid-template-columns: 1fr;
+    }
+}

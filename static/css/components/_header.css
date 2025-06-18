@@ -1,0 +1,114 @@
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    max-width: 1400px;
+    margin: 0 auto 40px auto;
+    padding: 0 10px;
+    flex-wrap: wrap;
+}
+
+header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-right: auto;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.search-container {
+    position: relative;
+    height: 40px;
+    width: 40px;
+    max-width: 400px;
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), background-color 0.2s;
+    cursor: pointer;
+}
+
+.search-container.focused {
+    width: 100%;
+    border-radius: var(--radius);
+    background-color: var(--background);
+    border-color: var(--ring);
+    cursor: text;
+}
+
+.search-container:not(.focused):hover {
+    background-color: var(--secondary);
+}
+
+.search-container .material-icons-outlined {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted-foreground);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.back-button {
+    margin-right: 0.5rem;
+}
+
+.back-button.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.back-button.icon-btn:hover {
+    opacity: 1;
+    background-color: var(--secondary);
+    border-color: var(--border);
+}
+
+.account-balance-details {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+    padding: 0 1rem;
+}
+
+.account-balance-details span:first-child {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+}
+.account-balance-details span:last-child {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+
+@media (max-width: 768px) {
+    header {
+        gap: 0.75rem;
+        margin-bottom: 20px;
+    }
+
+    .search-container {
+        order: 3;
+        width: 100%;
+        max-width: none;
+    }
+
+    .search-container.focused {
+        width: 100%;
+    }
+    
+    header h1 {
+        font-size: 20px;
+    }
+}

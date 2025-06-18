@@ -1,0 +1,130 @@
+.modal-content.wide {
+    max-width: 800px;
+}
+
+.recurring-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.recurring-form-section {
+    border-left: 1px solid var(--border);
+    padding-left: 2rem;
+}
+
+.recurring-list-section h3, .recurring-form-section h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.recurring-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-right: 1rem; 
+}
+
+.recurring-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background-color: var(--secondary);
+    transition: all 0.2s ease-in-out;
+}
+
+.recurring-item.inactive {
+    opacity: 0.6;
+    background-color: transparent;
+    border-style: dashed;
+}
+
+.recurring-item-header, .recurring-item-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.recurring-item-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recurring-item-amount {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.recurring-item-info {
+    font-size: 13px;
+    color: var(--muted-foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recurring-item-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.recurring-item .icon-btn {
+    width: 32px;
+    height: 32px;
+}
+
+.date-inputs {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+}
+.date-inputs > div {
+    flex: 1;
+}
+.date-inputs label {
+    font-size: 13px;
+    margin-bottom: 0.25rem;
+    display: block;
+    color: var(--muted-foreground);
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.form-actions .button-secondary {
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+}
+.form-actions .button-secondary:hover {
+     background-color: var(--border);
+}
+
+
+@media (max-width: 768px) {
+    .recurring-container {
+        grid-template-columns: 1fr;
+    }
+    .recurring-form-section {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--border);
+        padding-top: 2rem;
+        margin-top: 2rem;
+    }
+}

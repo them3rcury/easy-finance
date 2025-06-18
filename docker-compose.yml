@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    container_name: easy-dashboard
+    ports:
+      # Port mapping: <host_port>:<container_port>
+      - "5000:8000"
+    volumes:
+      - dashboard_data:/app/instance
+    environment:
+      - FLASK_APP=app
+    command: gunicorn --bind 0.0.0.0:8000 app:app
+
+volumes:
+  dashboard_data:
