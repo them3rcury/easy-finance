@@ -34,7 +34,7 @@ This is the fastest way to get started.
 
 1.  **Clone this repo:**
     ```sh
-    git clone [https://github.com/them3rcury/easy-finance](https://github.com/them3rcury/easy-finance)
+    git clone https://github.com/them3rcury/easy-finance
     cd easy-finance
     ```
 
@@ -53,7 +53,7 @@ Here’s how to run it on your machine locally.
 
 1.  **Clone this repo:**
     ```sh
-    git clone [https://github.com/them3rcury/easy-finance](https://github.com/them3rcury/easy-finance)
+    git clone https://github.com/them3rcury/easy-finance
     cd easy-finance
     ```
 
