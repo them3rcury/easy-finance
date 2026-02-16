@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
-from sqlalchemy import func, extract
+from sqlalchemy import func, extract, or_
 from sqlalchemy.sql import case
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
@@ -230,11 +230,65 @@ def dashboard():
 def account_details(account_id):
     account = Account.query.filter_by(id=account_id, user_id=current_user.id).first_or_404()
     
-    transactions = db.session.query(Transaction, Category.name.label('category_name'))\
+    categories = Category.query.filter_by(user_id=current_user.id).order_by(Category.name).all()
+    
+    query = db.session.query(Transaction, Category.name.label('category_name'))\
         .outerjoin(Category, Transaction.category_id == Category.id)\
-        .filter(Transaction.account_id == account.id)\
-        .order_by(Transaction.date.desc())\
-        .all()
+        .filter(Transaction.account_id == account.id)
+
+    # Filtering
+    search = request.args.get('search')
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(or_(
+            Transaction.description.ilike(search_term),
+            Category.name.ilike(search_term)
+        ))
+
+    category_id = request.args.get('category_id')
+    if category_id and category_id.isdigit():
+        query = query.filter(Transaction.category_id == int(category_id))
+
+    tx_type = request.args.get('type')
+    if tx_type == 'income':
+        query = query.filter(Transaction.amount > 0)
+    elif tx_type == 'expense':
+        query = query.filter(Transaction.amount < 0)
+
+    start_date = request.args.get('start_date')
+    if start_date:
+        try:
+            sd = datetime.strptime(start_date, '%Y-%m-%d')
+            query = query.filter(Transaction.date >= sd)
+        except ValueError:
+            pass
+
+    end_date = request.args.get('end_date')
+    if end_date:
+        try:
+            ed = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1) # Include the end date
+            query = query.filter(Transaction.date < ed)
+        except ValueError:
+            pass
+    
+    min_amount = request.args.get('min_amount')
+    if min_amount:
+         try:
+             query = query.filter(func.abs(Transaction.amount) >= float(min_amount))
+         except ValueError:
+             pass
+
+    max_amount = request.args.get('max_amount')
+    if max_amount:
+         try:
+             query = query.filter(func.abs(Transaction.amount) <= float(max_amount))
+         except ValueError:
+             pass
+
+    transactions = query.order_by(Transaction.date.desc()).all()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template('_transaction_list.html', transactions=transactions, current_user=current_user)
 
     today = datetime.utcnow()
     six_months_ago = today - timedelta(days=180)
@@ -275,7 +329,8 @@ def account_details(account_id):
         account=account, 
         transactions=transactions,
         chart_data=chart_json,
-        summary_stats=summary_stats
+        summary_stats=summary_stats,
+        categories=categories
     )
 
 

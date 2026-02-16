@@ -4,6 +4,7 @@ input[type="url"],
 input[type="search"],
 input[type="number"],
 input[type="date"],
+input[type="file"],
 select {
     width: 100%;
     padding: 0.85rem 1rem;
@@ -33,6 +34,7 @@ input[type="url"]:focus,
 input[type="search"]:focus,
 input[type="number"]:focus,
 input[type="date"]:focus,
+input[type="file"]:focus,
 select:focus {
     border-color: var(--ring);
     box-shadow: 0 0 0 3px hsla(221, 83%, 60%, 0.2);
@@ -135,4 +137,27 @@ select:focus {
     background: transparent;
     border: none;
     box-shadow: none;
+}
+
+/* File Input Styling */
+input[type="file"] {
+    padding: 0.5rem; /* Slightly less padding for file input container */
+}
+
+input[type="file"]::file-selector-button {
+    margin-right: 1rem;
+    border: none;
+    background: var(--primary);
+    padding: 0.5rem 1rem;
+    border-radius: calc(var(--radius) - 4px);
+    color: var(--primary-foreground);
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+    font-weight: 500;
+    font-size: 0.85rem;
+    font-family: inherit;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background: var(--ring);
 }

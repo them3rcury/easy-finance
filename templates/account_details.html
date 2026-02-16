@@ -65,43 +65,100 @@
              <canvas id="transactionChart"></canvas>
         </div>
 
-        <div class="transactions-container account">
+    <div class="transactions-container account">
             <div class="account-header">
                 <h3><span class="material-icons-outlined">receipt_long</span><span>Recent Transactions</span></h3>
             </div>
-            <ul class="transactions-list transactions-list-detailed">
-                {% for t in transactions %}
-                <li class="transaction-item">
-                    <div class="transaction-icon">
-                        <span class="material-icons-outlined">{% if t.Transaction.amount >= 0 %}trending_up{% else %}trending_down{% endif %}</span>
-                    </div>
-                    <div class="transaction-details">
-                        <span class="transaction-description">{{ t.Transaction.description }}</span>
-                        <span class="transaction-date">{{ t.category_name or 'Uncategorized' }}</span>
-                    </div>
-                    <span class="transaction-date-only">{{ t.Transaction.date.strftime('%Y-%m-%d') }}</span>
-                    <div class="transaction-amount {% if t.Transaction.amount >= 0 %}positive{% else %}negative{% endif %}">
-                        {{ current_user.currency }}{% if t.Transaction.amount >= 0 %}+ {% else %}- {% endif %}{{ (t.Transaction.amount|abs)|format_number }}
-                    </div>
-                    <div class="transaction-actions">
-                        <button class="icon-btn edit-transaction-btn" title="Edit Transaction"
-                                data-transaction-id="{{ t.Transaction.id }}"
-                                data-transaction-description="{{ t.Transaction.description | urlencode }}"
-                                data-transaction-amount="{{ t.Transaction.amount }}"
-                                data-transaction-category-id="{{ t.Transaction.category_id }}">
-                            <span class="material-icons-outlined">edit</span>
-                        </button>
-                        <button class="icon-btn delete-btn delete-transaction-btn" title="Delete Transaction"
-                                data-transaction-id="{{ t.Transaction.id }}">
-                            <span class="material-icons-outlined">delete</span>
-                        </button>
-                    </div>
-                </li>
-                {% else %}
-                <li class="empty-list-message" style="display: block;">No transactions found for this account.</li>
-                {% endfor %}
+
+            <div class="filter-bar">
+                <div class="search-group">
+                    <span class="material-icons-outlined search-icon">search</span>
+                    <input type="text" id="filter-search" placeholder="Search transactions..." value="{{ request.args.get('search', '') }}">
+                </div>
+                
+                <div class="filter-group">
+                    <select id="filter-category">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if request.args.get('category_id')|int == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select id="filter-type">
+                        <option value="">All Types</option>
+                        <option value="income" {% if request.args.get('type') == 'income' %}selected{% endif %}>Income</option>
+                        <option value="expense" {% if request.args.get('type') == 'expense' %}selected{% endif %}>Expense</option>
+                    </select>
+
+                    <input type="date" id="filter-start-date" placeholder="From" value="{{ request.args.get('start_date', '') }}">
+                    <input type="date" id="filter-end-date" placeholder="To" value="{{ request.args.get('end_date', '') }}">
+                    
+                    <button id="clear-filters-btn" class="icon-btn" title="Clear Filters">
+                        <span class="material-icons-outlined">filter_alt_off</span>
+                    </button>
+                </div>
+            </div>
+
+            <ul class="transactions-list transactions-list-detailed" id="transactions-list-ul">
+                {% include '_transaction_list.html' %}
             </ul>
         </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterInputs = {
+                search: document.getElementById('filter-search'),
+                category_id: document.getElementById('filter-category'),
+                type: document.getElementById('filter-type'),
+                start_date: document.getElementById('filter-start-date'),
+                end_date: document.getElementById('filter-end-date')
+            };
+            const clearBtn = document.getElementById('clear-filters-btn');
+            const listContainer = document.getElementById('transactions-list-ul');
+
+            function fetchTransactions() {
+                const params = new URLSearchParams();
+                for (const [key, input] of Object.entries(filterInputs)) {
+                    if (input.value) {
+                        params.append(key, input.value);
+                    }
+                }
+
+                const url = `${window.location.pathname}?${params.toString()}`;
+                
+                // Update URL without reloading
+                window.history.pushState({}, '', url);
+
+                fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    listContainer.innerHTML = html;
+                    // Re-bind event listeners for edit/delete buttons if necessary 
+                    // (Assuming main.js handles delegation or we need to re-init)
+                })
+                .catch(err => console.error('Error fetching transactions:', err));
+            }
+
+            // Debounce function for text search
+            let timeout = null;
+            filterInputs.search.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(fetchTransactions, 300);
+            });
+
+            // Immediate fetch for other filters
+            [filterInputs.category_id, filterInputs.type, filterInputs.start_date, filterInputs.end_date].forEach(input => {
+                input.addEventListener('change', fetchTransactions);
+            });
+
+            clearBtn.addEventListener('click', () => {
+                Object.values(filterInputs).forEach(input => input.value = '');
+                fetchTransactions();
+            });
+        });
+    </script>
     </main>
 
     {% include '_modals.html' %}
