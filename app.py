@@ -7,6 +7,30 @@ from sqlalchemy import func, extract
 from sqlalchemy.sql import case
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
+import openpyxl
+try:
+    import google.generativeai as genai
+    HAS_GENAI = True
+except ImportError:
+    HAS_GENAI = False
+    logging.warning("google.generativeai module not found. AI features will be disabled.")
+from io import BytesIO
+import json
+import logging
+import re
+from bs4 import BeautifulSoup
+
+def parse_turkish_amount(amount_str):
+    if not amount_str:
+        return 0.0
+    # Remove dots (thousands separator) and replace comma with dot (decimal separator)
+    clean_str = amount_str.replace('.', '').replace(',', '.')
+    # Remove any non-numeric chars except the decimal dot and minus sign
+    clean_str = re.sub(r'[^\d.-]', '', clean_str)
+    try:
+        return float(clean_str)
+    except ValueError:
+        return 0.0
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'a-very-secret-key-that-you-should-change'
@@ -22,6 +46,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(150), nullable=False)
     currency = db.Column(db.String(5), nullable=False, default='$')
+    gemini_api_key = db.Column(db.String(255), nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -61,7 +86,7 @@ class RecurringTransaction(db.Model):
     next_due_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime)
     account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
-    account = db.relationship('Account', backref='recurring_transactions')
+    account = db.relationship('Account', backref=db.backref('recurring_transactions', cascade='all, delete-orphan'))
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
@@ -483,15 +508,21 @@ def user_settings():
     if request.method == 'PUT':
         data = request.get_json()
         currency = data.get('currency')
+        api_key = data.get('gemini_api_key')
+        
         if currency and len(currency) <= 5:
             current_user.currency = currency
-            db.session.commit()
-            return jsonify({'message': 'Settings updated successfully'})
-        return jsonify({'error': 'Invalid data'}), 400
+            
+        if api_key is not None: # check for None to distinguish from empty string
+            current_user.gemini_api_key = api_key.strip()
+            
+        db.session.commit()
+        return jsonify({'message': 'Settings updated successfully'})
     
     return jsonify({
         'username': current_user.username,
-        'currency': current_user.currency
+        'currency': current_user.currency,
+        'gemini_api_key': current_user.gemini_api_key
     })
 
 @app.route('/api/recurring', methods=['GET'])
@@ -611,3 +642,221 @@ def toggle_recurring_transaction(rt_id):
     rt.is_active = not rt.is_active
     db.session.commit()
     return jsonify({'message': f'Recurring transaction set to {"active" if rt.is_active else "inactive"}'})
+
+@app.route('/api/upload', methods=['POST'])
+@login_required
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    account_id = request.form.get('account_id')
+    use_ai = request.form.get('use_ai') == 'true'
+
+    if not account_id:
+        return jsonify({'error': 'Account ID is required'}), 400
+
+    account = Account.query.filter_by(id=account_id, user_id=current_user.id).first()
+    if not account:
+        return jsonify({'error': 'Account not found'}), 404
+
+    transactions_to_add = []
+    descriptions_for_ai = []
+    
+    try:
+        filename = file.filename.lower()
+        if filename.endswith('.html') or filename.endswith('.htm'):
+            # HTML Parsing Logic
+            soup = BeautifulSoup(file.read(), 'html.parser')
+            
+            # Find the table with transaction headers
+            tables = soup.find_all('table')
+            target_table = None
+            date_col_idx = -1
+            desc_col_idx = -1
+            amount_col_idx = -1
+            
+            for table in tables:
+                headers = [th.get_text(strip=True) for th in table.find_all('th')]
+                if not headers:
+                    # check first row if no th present
+                    first_row = table.find('tr')
+                    if first_row:
+                        headers = [td.get_text(strip=True) for td in first_row.find_all('td')]
+
+                # Look for specific Turkish headers
+                d_idx = next((i for i, h in enumerate(headers) if 'tarih' in h.lower()), -1)
+                desc_idx = next((i for i, h in enumerate(headers) if 'açıklama' in h.lower()), -1)
+                amt_idx = next((i for i, h in enumerate(headers) if 'tutar' in h.lower()), -1)
+                
+                if d_idx != -1 and desc_idx != -1 and amt_idx != -1:
+                    target_table = table
+                    date_col_idx = d_idx
+                    desc_col_idx = desc_idx
+                    amount_col_idx = amt_idx
+                    break
+            
+            if not target_table:
+                return jsonify({'error': 'Could not find transaction table in HTML.'}), 400
+
+            # Iterate through rows, skipping header
+            rows = target_table.find_all('tr')
+            for row in rows:
+                cells = row.find_all(['td', 'th'])
+                if len(cells) <= max(date_col_idx, desc_col_idx, amount_col_idx):
+                    continue
+                
+                # Verify it's a data row by checking if date cell looks like a date
+                date_str = cells[date_col_idx].get_text(strip=True)
+                try:
+                    date_obj = datetime.strptime(date_str, '%d.%m.%Y')
+                except ValueError:
+                    continue # Skip header or invalid rows
+
+                desc_str = cells[desc_col_idx].get_text(strip=True)
+                amount_str = cells[amount_col_idx].get_text(strip=True)
+                amount_val = parse_turkish_amount(amount_str)
+
+                transactions_to_add.append({
+                    'date': date_obj,
+                    'description': desc_str,
+                    'amount': amount_val
+                })
+                if desc_str:
+                    descriptions_for_ai.append(desc_str)
+
+        elif filename.endswith('.xlsx'):
+            # Excel Parsing Logic (Keep existing logic mostly)
+            wb = openpyxl.load_workbook(BytesIO(file.read()), data_only=True)
+            ws = wb.active
+            
+            headers = [cell.value for cell in ws[1]]
+            
+            date_idx = next((i for i, h in enumerate(headers) if h and 'date' in str(h).lower()), None)
+            desc_idx = next((i for i, h in enumerate(headers) if h and any(k in str(h).lower() for k in ['description', 'memo', 'payee', 'merchant', 'text', 'açıklama'])), None)
+            amount_idx = next((i for i, h in enumerate(headers) if h and any(k in str(h).lower() for k in ['amount', 'betrag', 'value', 'price', 'tutar'])), None)
+
+            if date_idx is None or desc_idx is None or amount_idx is None:
+                 return jsonify({'error': 'Could not identify strict columns (Date, Description, Amount). Headers found: ' + str(headers)}), 400
+
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                 if not row[date_idx] or row[amount_idx] is None: continue
+                 
+                 date_val = row[date_idx]
+                 date_obj = datetime.utcnow()
+
+                 if isinstance(date_val, str):
+                     try:
+                         date_obj = datetime.strptime(date_val, '%Y-%m-%d')
+                     except: 
+                         try:
+                            date_obj = datetime.strptime(date_val, '%d.%m.%Y')
+                         except:
+                             continue 
+                 elif isinstance(date_val, datetime):
+                     date_obj = date_val
+                 else:
+                     continue
+
+                 desc_val = str(row[desc_idx]).strip()
+                 amount_val = row[amount_idx]
+                 
+                 if isinstance(amount_val, str):
+                     try:
+                        amount_val = float(re.sub(r'[^\d.-]', '', amount_val.replace(',', '.')))
+                     except:
+                        if ',' in amount_val and '.' in amount_val: # European/Turkish format using helper
+                             amount_val = parse_turkish_amount(str(row[amount_idx]))
+                        else:
+                             continue
+
+                 transactions_to_add.append({
+                     'date': date_obj,
+                     'description': desc_val,
+                     'amount': float(amount_val)
+                 })
+                 if desc_val:
+                    descriptions_for_ai.append(desc_val)
+        else:
+            return jsonify({'error': 'Unsupported file format. Please use .html or .xlsx'}), 400
+
+        # --- AI and Saving Logic (Shared) ---
+        category_map = {}
+        processed_count = 0
+        
+        if use_ai and descriptions_for_ai:
+            if not HAS_GENAI:
+                logging.warning("AI categorization requested but google.generativeai module is missing.")
+            else:
+                api_key = current_user.gemini_api_key
+                if api_key:
+                    try:
+                        genai.configure(api_key=api_key)
+                        model = genai.GenerativeModel('gemini-2.5-flash')
+                        
+                        existing_categories = [c.name for c in Category.query.filter_by(user_id=current_user.id).all()]
+                        unique_descriptions = list(set(descriptions_for_ai))[:50] 
+                        
+                        prompt = f"""
+                        You are a financial assistant. Map these transaction descriptions to the most appropriate category from this list: {existing_categories}.
+                        If none fit well, create a new simple category name (e.g. 'Groceries', 'Transport', 'Utilities', 'Salary', 'Transfer').
+                        Respond ONLY with a valid JSON object where keys are descriptions and values are category names.
+                        Descriptions: {json.dumps(unique_descriptions)}
+                        """
+                        
+                        response = model.generate_content(prompt)
+                        text_response = response.text.strip()
+                        if text_response.startswith('```json'):
+                            text_response = text_response[7:-3]
+                        elif text_response.startswith('```'): # Handle plain code block
+                            text_response = text_response[3:-3]
+                        
+                        category_map = json.loads(text_response)
+                    except Exception as ai_error:
+                        logging.error(f"AI Categorization failed: {ai_error}")
+
+        for tx in transactions_to_add:
+            # Check for dupes (simple check based on date, amount, description)
+            # This is optional but good practice to avoid re-run spam
+            exists = Transaction.query.filter_by(
+                account_id=account.id, 
+                date=tx['date'], 
+                amount=tx['amount'], 
+                description=tx['description']
+            ).first()
+            
+            if exists:
+                continue
+
+            category_id = None
+            cat_name = category_map.get(tx['description'])
+            
+            if cat_name:
+                category = Category.query.filter_by(user_id=current_user.id, name=cat_name).first()
+                if not category:
+                    # Determine type based on amount sign usually, but let's default to expense unless positive
+                    cat_type = 'income' if tx['amount'] > 0 else 'expense'
+                    category = Category(name=cat_name, type=cat_type, user_id=current_user.id)
+                    db.session.add(category)
+                    db.session.commit()
+                category_id = category.id
+
+            new_trans = Transaction(
+                description=tx['description'],
+                amount=tx['amount'],
+                date=tx['date'],
+                account_id=account.id,
+                category_id=category_id
+            )
+            db.session.add(new_trans)
+            account.balance += tx['amount']
+            processed_count += 1
+
+        db.session.commit()
+        return jsonify({'message': 'Import successful', 'count': processed_count})
+
+    except Exception as e:
+        logging.error(f"Import failed: {e}")
+        return jsonify({'error': f"Import failed: {str(e)}"}), 500

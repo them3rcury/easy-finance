@@ -62,6 +62,14 @@ document.addEventListener('DOMContentLoaded', () => {
         currencySelector: document.getElementById('currency-selector'),
         currencySelectorInput: document.getElementById('currency-selector-input'),
         currencyDropdown: document.getElementById('currency-dropdown'),
+        
+        importModal: document.getElementById('import-modal'),
+        openImportModalBtn: document.getElementById('open-import-modal-btn'),
+        importAccountSelect: document.getElementById('import-account-select'),
+        importFileInput: document.getElementById('import-file-input'),
+        importSubmitBtn: document.getElementById('import-submit-btn'),
+        importStatus: document.getElementById('import-status'),
+        useAiCategorization: document.getElementById('use-ai-categorization'),
 
         errorToast: document.getElementById('error-toast'),
     };
@@ -476,6 +484,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.openSettingsModalBtn) {
         elements.openSettingsModalBtn.addEventListener('click', () => ui.openModal(elements.settingsModal));
+    }
+
+    if (elements.openImportModalBtn) {
+        elements.openImportModalBtn.addEventListener('click', () => {
+             const accounts = ui.getState().accounts;
+             if (accounts.length === 0) {
+                 ui.showErrorToast('Please create an account first.');
+                 return;
+             }
+             ui.populateAccountDropdown(elements.importAccountSelect, accounts);
+             elements.importFileInput.value = '';
+             elements.importStatus.textContent = '';
+             elements.importStatus.style.color = '';
+             ui.openModal(elements.importModal);
+        });
+    }
+
+    if (elements.importSubmitBtn) {
+        elements.importSubmitBtn.addEventListener('click', async () => {
+             const accountId = elements.importAccountSelect.value;
+             const file = elements.importFileInput.files[0];
+             const useAi = elements.useAiCategorization.checked;
+
+             if (!file) {
+                 return ui.showErrorToast('Please select a file to import.');
+             }
+
+             elements.importSubmitBtn.disabled = true;
+             elements.importSubmitBtn.textContent = 'Importing...';
+             elements.importStatus.textContent = 'Uploading and processing... This may take a moment.';
+             elements.importStatus.style.color = 'var(--text-primary)';
+
+             try {
+                 const result = await api.uploadTransactions(file, accountId, useAi);
+                 if (result.error) {
+                     ui.showErrorToast(result.error);
+                     elements.importStatus.textContent = 'Error: ' + result.error;
+                     elements.importStatus.style.color = 'var(--destructive)';
+                 } else {
+                     ui.showErrorToast(`Successfully imported ${result.count} transactions.`);
+                     ui.closeModal(elements.importModal);
+                     if (onDetailsPage) {
+                        window.location.reload();
+                     } else {
+                        refreshDashboard();
+                     }
+                 }
+             } catch (error) {
+                 console.error(error);
+                 ui.showErrorToast('Failed to import transactions.');
+                 elements.importStatus.textContent = 'An unexpected error occurred.';
+                 elements.importStatus.style.color = 'var(--destructive)';
+             } finally {
+                 elements.importSubmitBtn.disabled = false;
+                 elements.importSubmitBtn.textContent = 'Import Data';
+             }
+        });
     }
 
     window.addEventListener('keydown', (e) => {

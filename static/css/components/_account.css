@@ -23,6 +23,7 @@
     padding-bottom: 0.75rem;
     margin-bottom: 1rem;
     border-bottom: 1px solid var(--border);
+    position: relative; /* Added for absolute positioning of actions */
 }
 
 .account-header h3 {
@@ -68,6 +69,14 @@
     transition: opacity 0.2s ease-in-out, max-width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     max-width: 0;
     overflow: hidden;
+    position: absolute; /* Absolute positioning to prevent layout shift */
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%); /* Vertically center */
+    background-color: var(--card); /* Match background */
+    backdrop-filter: blur(4px); /* improve readability over text */
+    padding-left: 0.5rem; /* Space from text if overlap */
+    border-radius: var(--radius); /* Rounded corners */
 }
 
 .account:hover .account-actions {
@@ -92,6 +101,7 @@
     padding: 0.6rem 0.5rem;
     border-radius: var(--radius);
     transition: all 0.2s ease-in-out;
+    position: relative; /* Added for absolute positioning of actions */
 }
 
 .transaction-item:hover {
@@ -142,10 +152,17 @@ html[data-theme='light'] .transaction-amount.positive {
     align-items: center;
     gap: 0.25rem;
     opacity: 0;
-    margin-left: 0.5rem;
+    /* margin-left: 0.5rem; Removed margin-left as it is absolute now */
     transition: opacity 0.2s ease-in-out, max-width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     max-width: 0;
     overflow: hidden;
+    position: absolute; /* Absolute positioning */
+    right: 0.5rem; /* Match padding */
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--secondary); /* Match hover background */
+    padding-left: 0.5rem;
+    border-radius: var(--radius);
 }
 
 .transaction-item:hover .transaction-actions {

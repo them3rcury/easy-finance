@@ -165,13 +165,31 @@ export function renderSummary(summaryData, currencySymbol) {
     const ctx = document.getElementById('expense-chart').getContext('2d');
     const styles = getComputedStyle(document.documentElement);
 
-    const chartColors = [
-        styles.getPropertyValue('--primary').trim(),
-        styles.getPropertyValue('--destructive').trim(),
-        'hsl(48, 95%, 60%)',
-        'hsl(25, 95%, 60%)',
-        'hsl(280, 80%, 70%)',
+    const baseColors = [
+        'hsl(216, 90%, 65%)',  // Blue
+        'hsl(160, 80%, 55%)',  // Mint
+        'hsl(45, 95%, 60%)',   // Yellow
+        'hsl(25, 95%, 65%)',   // Orange
+        'hsl(340, 85%, 65%)',  // Pink
+        'hsl(270, 80%, 70%)',  // Purple
+        'hsl(190, 85%, 60%)',  // Cyan
+        'hsl(10, 85%, 65%)',   // Red-Orange
+        'hsl(120, 50%, 65%)',  // Green
+        'hsl(240, 60%, 70%)',  // Indigo
     ];
+
+    const generateColors = (count) => {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            colors.push(baseColors[i % baseColors.length]);
+        }
+        return colors;
+    };
+
+    const chartColors = generateColors(expenseBreakdown.length);
+    const borderColor = styles.getPropertyValue('--background').trim(); 
+    
+    // Sort logic could go here if needed, e.g. sort by total desc
 
     expenseChart = new Chart(ctx, {
         type: 'doughnut',
@@ -181,21 +199,59 @@ export function renderSummary(summaryData, currencySymbol) {
                 label: 'Expenses',
                 data: expenseBreakdown.map(e => e.total),
                 backgroundColor: chartColors,
-                borderColor: styles.getPropertyValue('--card').trim(),
-                borderWidth: 4,
+                borderColor: borderColor,
+                borderWidth: 2,
+                borderRadius: 4, 
+                hoverOffset: 10
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '75%',
             plugins: {
                 legend: {
                     position: 'bottom',
                     labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 15,
                         color: styles.getPropertyValue('--muted-foreground').trim(),
-                        padding: 20
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 11
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: styles.getPropertyValue('--card').trim().replace('0.6', '0.98'),
+                    titleColor: styles.getPropertyValue('--foreground').trim(),
+                    bodyColor: styles.getPropertyValue('--foreground').trim(),
+                    titleFont: { family: "'Inter', sans-serif", size: 13, weight: '600' },
+                    bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    borderColor: styles.getPropertyValue('--border').trim(),
+                    borderWidth: 1,
+                    displayColors: true,
+                    usePointStyle: true,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += `${currencySymbol}${formatNumber(context.parsed)}`;
+                            }
+                            return label;
+                        }
                     }
                 }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
             }
         }
     });

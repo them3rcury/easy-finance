@@ -105,10 +105,27 @@ export function initializeSettings(elements, settings, onCurrencyChange) {
     colorSchemeRadios.forEach(radio => radio.addEventListener('change', (e) => applyAndSave('dashboardColorScheme', e.target.value, 'data-color-scheme', document.documentElement)));
     
     dashboardTitleInput.addEventListener('input', (e) => {
-        const newTitle = e.target.value;
         if (dashboardTitle) {
-            dashboardTitle.textContent = newTitle;
+            dashboardTitle.textContent = e.target.value;
         }
-        applyAndSave('dashboardTitle', newTitle);
+        localStorage.setItem('dashboardTitle', e.target.value);
     });
+
+    const geminiApiKeyInput = document.getElementById('gemini-api-key-input');
+    if (geminiApiKeyInput) {
+         geminiApiKeyInput.value = settings.gemini_api_key || '';
+         
+         const saveApiKey = () => {
+             const apiKey = geminiApiKeyInput.value.trim();
+             api.updateSettings({ gemini_api_key: apiKey });
+         };
+
+         geminiApiKeyInput.addEventListener('blur', saveApiKey);
+         geminiApiKeyInput.addEventListener('keypress', (e) => {
+             if (e.key === 'Enter') {
+                 saveApiKey();
+                 geminiApiKeyInput.blur();
+             }
+         });
+    }
 }

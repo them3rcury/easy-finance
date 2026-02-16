@@ -116,3 +116,16 @@ export async function deleteRecurring(id) {
 export async function toggleRecurring(id) {
     await fetch(`/api/recurring/${id}/toggle`, { method: 'PUT' });
 }
+
+export async function uploadTransactions(file, accountId, useAi) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('account_id', accountId);
+    formData.append('use_ai', useAi);
+
+    const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+    });
+    return response.json();
+}
