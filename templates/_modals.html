@@ -111,12 +111,25 @@
 </div>
 
 <div id="manage-recurring-modal" class="modal">
-    <div class="modal-content wide">
+    <div class="modal-content wide recurring-modal">
         <span class="modal-close-btn">&times;</span>
         <h2>Recurring Transactions</h2>
+        
+        <!-- Mobile view tabs -->
+        <div class="recurring-view-tabs">
+            <button class="recurring-view-tab active" data-view="list">
+                <span class="material-icons-outlined">list</span>
+                Active Items
+            </button>
+            <button class="recurring-view-tab" data-view="form">
+                <span class="material-icons-outlined">add_circle_outline</span>
+                Add / Edit
+            </button>
+        </div>
+
         <div class="recurring-container">
-            <div class="recurring-list-section">
-                <h3>Active Recurring Items</h3>
+            <div class="recurring-list-section" data-view-panel="list">
+                <h3 class="recurring-section-title">Active Recurring Items</h3>
                 <ul id="recurring-transactions-list" class="recurring-list">
                 </ul>
                 <div class="empty-list-message" id="recurring-empty-message">
@@ -124,37 +137,137 @@
                     <p>No recurring transactions found.</p>
                 </div>
             </div>
-            <div class="recurring-form-section">
-                <h3 id="recurring-form-title">Add New Recurring Transaction</h3>
+            <div class="recurring-form-section" data-view-panel="form">
+                <h3 id="recurring-form-title" class="recurring-section-title">Add New Recurring Transaction</h3>
                 <div class="modal-form">
                     <input type="hidden" id="recurring-transaction-id">
-                    <div class="radio-group">
+                    
+                    <!-- Type Selector -->
+                    <div class="recurring-type-tabs">
+                        <button class="recurring-type-tab active" data-payment-type="standard">
+                            <span class="material-icons-outlined">event_repeat</span>
+                            Standard
+                        </button>
+                        <button class="recurring-type-tab" data-payment-type="debt">
+                            <span class="material-icons-outlined">credit_card</span>
+                            Debt Payment
+                        </button>
+                    </div>
+                    <input type="hidden" id="recurring-payment-type" value="standard">
+
+                    <!-- Income/Expense Toggle (standard only) -->
+                    <div class="radio-group" id="recurring-income-expense-toggle">
                         <input type="radio" id="type-expense-recurring" name="transaction-type-recurring" value="expense" checked>
                         <label for="type-expense-recurring">Expense</label>
                         <input type="radio" id="type-income-recurring" name="transaction-type-recurring" value="income">
                         <label for="type-income-recurring">Income</label>
                     </div>
+
+                    <!-- Name -->
                     <input type="text" id="recurring-name" placeholder="Name (e.g., Netflix Subscription)" required>
-                    <input type="number" id="recurring-amount" placeholder="Amount" step="0.01" min="0" required>
-                    <select id="recurring-account-select" class="settings-input" required></select>
-                    <select id="recurring-category-select" class="settings-input"></select>
-                    <select id="recurring-frequency-select" class="settings-input" required>
-                        <option value="" disabled selected>Select frequency</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                    </select>
-                    <div class="date-inputs">
-                        <div>
-                            <label for="recurring-start-date">Start Date</label>
-                            <input type="date" id="recurring-start-date" required>
+                    
+                    <!-- ===== SCHEDULING SECTION ===== -->
+                    <div class="form-section">
+                        <div class="form-section-label">
+                            <span class="material-icons-outlined">schedule</span>
+                            Scheduling
                         </div>
-                        <div>
-                            <label for="recurring-end-date">End Date (optional)</label>
-                            <input type="date" id="recurring-end-date">
+                        
+                        <div class="form-row-2col">
+                            <div class="form-field">
+                                <label for="recurring-account-select" class="field-label-sm">Account</label>
+                                <select id="recurring-account-select" class="settings-input" required></select>
+                            </div>
+                            <div class="form-field">
+                                <label for="recurring-category-select" class="field-label-sm">Category</label>
+                                <select id="recurring-category-select" class="settings-input"></select>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="recurring-frequency-select" class="field-label-sm">Frequency</label>
+                            <select id="recurring-frequency-select" class="settings-input" required>
+                                <option value="" disabled selected>Select frequency</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+
+                        <div class="form-row-2col">
+                            <div class="form-field">
+                                <label for="recurring-start-date" class="field-label-sm">Start Date</label>
+                                <input type="date" id="recurring-start-date" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="recurring-end-date" class="field-label-sm">End Date (optional)</label>
+                                <input type="date" id="recurring-end-date">
+                            </div>
                         </div>
                     </div>
+
+                    <!-- ===== DEBT DETAILS SECTION (debt only) ===== -->
+                    <div id="debt-details-section" class="form-section debt-section" style="display: none;">
+                        <div class="form-section-label">
+                            <span class="material-icons-outlined">account_balance</span>
+                            Debt Details
+                        </div>
+
+                        <div id="debt-total-amount-group" class="form-field">
+                            <label for="recurring-total-amount" class="field-label-sm">Total Debt Amount</label>
+                            <input type="number" id="recurring-total-amount" placeholder="e.g., 50000" step="0.01" min="0">
+                        </div>
+
+                        <div id="debt-paid-amount-group" class="form-field">
+                            <label for="recurring-paid-amount" class="field-label-sm">Already Paid</label>
+                            <input type="number" id="recurring-paid-amount" placeholder="0" step="0.01" min="0" value="0">
+                        </div>
+                    </div>
+
+                    <!-- ===== PAYMENT CALCULATION SECTION (debt only) ===== -->
+                    <div id="debt-calc-section" class="form-section debt-section" style="display: none;">
+                        <div class="form-section-label">
+                            <span class="material-icons-outlined">calculate</span>
+                            Payment Calculation
+                        </div>
+
+                        <div id="debt-method-group" class="debt-method-group">
+                            <div class="debt-method-radios">
+                                <label class="debt-method-option">
+                                    <input type="radio" name="debt-method" value="by-amount" checked>
+                                    <span>Set Amount</span>
+                                </label>
+                                <label class="debt-method-option">
+                                    <input type="radio" name="debt-method" value="by-date">
+                                    <span>Set End Date</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="debt-payment-amount-group" class="form-field">
+                            <label for="recurring-amount" class="field-label-sm">
+                                <span id="debt-amount-label">Payment Amount Per Period</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Amount (always present) -->
+                    <input type="number" id="recurring-amount" placeholder="Amount" step="0.01" min="0" required>
+                    
+                    <!-- ===== DEBT CALCULATOR RESULT ===== -->
+                    <div id="debt-calculator-info" class="debt-calculator-info" style="display: none;">
+                        <div class="debt-calc-row">
+                            <span class="material-icons-outlined">schedule</span>
+                            <span id="debt-calc-duration">Enter total debt to see estimated duration</span>
+                        </div>
+                        <div class="debt-calc-row">
+                            <span class="material-icons-outlined">event</span>
+                            <span id="debt-calc-end-date">Estimated payoff date will appear here</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
                     <div class="form-actions">
                          <button id="save-recurring-btn" class="button-primary">Add Recurring Transaction</button>
                          <button id="cancel-recurring-edit-btn" class="button-secondary" style="display: none;">Cancel</button>

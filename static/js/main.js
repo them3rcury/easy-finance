@@ -399,20 +399,293 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Mobile view tab switching (list vs form)
+    document.querySelectorAll('.recurring-view-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const view = tab.dataset.view;
+            document.querySelectorAll('.recurring-view-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            document.querySelectorAll('[data-view-panel]').forEach(panel => {
+                panel.style.display = panel.dataset.viewPanel === view ? '' : 'none';
+            });
+        });
+    });
+
+    // Recurring type tabs (Standard vs Debt Payment)
+    document.querySelectorAll('.recurring-type-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            const paymentType = tab.dataset.paymentType;
+            document.getElementById('recurring-payment-type').value = paymentType;
+            
+            document.querySelectorAll('.recurring-type-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            const isDebt = paymentType === 'debt';
+            document.getElementById('debt-details-section').style.display = isDebt ? '' : 'none';
+            document.getElementById('debt-calc-section').style.display = isDebt ? '' : 'none';
+            document.getElementById('debt-calculator-info').style.display = isDebt ? '' : 'none';
+            document.getElementById('recurring-income-expense-toggle').style.display = isDebt ? 'none' : '';
+            
+            const amountInput = document.getElementById('recurring-amount');
+            if (isDebt) {
+                // Force expense type and monthly for debt
+                document.getElementById('type-expense-recurring').checked = true;
+                document.getElementById('recurring-frequency-select').value = 'monthly';
+                ui.populateCategoryDropdown(document.getElementById('recurring-category-select'), categories, 'expense');
+                applyDebtMethod();
+            } else {
+                amountInput.placeholder = 'Amount';
+                amountInput.readOnly = false;
+                amountInput.classList.remove('auto-calculated');
+            }
+            
+            updateDebtCalculator();
+        });
+    });
+
+    // Debt method radio handlers (by-amount vs by-date)
+    function applyDebtMethod() {
+        const method = document.querySelector('input[name="debt-method"]:checked')?.value || 'by-amount';
+        const amountInput = document.getElementById('recurring-amount');
+        const endDateInput = document.getElementById('recurring-end-date');
+        const amountLabel = document.getElementById('debt-amount-label');
+        const frequency = document.getElementById('recurring-frequency-select').value || 'monthly';
+        const freqNames = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' };
+
+        if (method === 'by-date') {
+            // User sets end date → payment amount is auto-calculated
+            amountInput.readOnly = true;
+            amountInput.classList.add('auto-calculated');
+            amountInput.placeholder = 'Auto-calculated from end date';
+            amountLabel.textContent = `${freqNames[frequency] || ''} Payment (auto-calculated)`;
+            endDateInput.readOnly = false;
+        } else {
+            // User sets payment amount → end date is auto-calculated
+            amountInput.readOnly = false;
+            amountInput.classList.remove('auto-calculated');
+            amountInput.placeholder = `${freqNames[frequency] || ''} Payment Amount`;
+            amountLabel.textContent = `${freqNames[frequency] || ''} Payment Amount`;
+            endDateInput.readOnly = false;
+        }
+    }
+
+    document.querySelectorAll('input[name="debt-method"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            applyDebtMethod();
+            updateDebtCalculator();
+        });
+    });
+
+    // Helper: count payment periods between two dates for a given frequency
+    function countPaymentsBetween(startDate, endDate, frequency) {
+        if (endDate <= startDate) return 0;
+        const diffMs = endDate - startDate;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        
+        switch (frequency) {
+            case 'daily': return Math.floor(diffDays);
+            case 'weekly': return Math.floor(diffDays / 7);
+            case 'monthly': {
+                const months = (endDate.getFullYear() - startDate.getFullYear()) * 12 
+                    + (endDate.getMonth() - startDate.getMonth());
+                return Math.max(1, months);
+            }
+            case 'yearly': {
+                const years = endDate.getFullYear() - startDate.getFullYear();
+                return Math.max(1, years);
+            }
+            default: return Math.floor(diffDays / 30);
+        }
+    }
+
+    // Helper: advance date by N frequency periods
+    function advanceDate(date, freq, count) {
+        const d = new Date(date);
+        if (freq === 'daily') d.setDate(d.getDate() + count);
+        else if (freq === 'weekly') d.setDate(d.getDate() + count * 7);
+        else if (freq === 'monthly') d.setMonth(d.getMonth() + count);
+        else if (freq === 'yearly') d.setFullYear(d.getFullYear() + count);
+        return d;
+    }
+
+    // Helper: format duration text from payment count + frequency
+    function formatDuration(paymentCount, frequency) {
+        if (frequency === 'monthly') {
+            const years = Math.floor(paymentCount / 12);
+            const months = paymentCount % 12;
+            if (years > 0) {
+                let t = `~${years} year${years > 1 ? 's' : ''}`;
+                if (months > 0) t += ` ${months} month${months > 1 ? 's' : ''}`;
+                return t;
+            }
+            return `~${paymentCount} month${paymentCount > 1 ? 's' : ''}`;
+        } else if (frequency === 'yearly') {
+            return `~${paymentCount} year${paymentCount > 1 ? 's' : ''}`;
+        } else if (frequency === 'weekly') {
+            if (paymentCount >= 52) {
+                const y = Math.floor(paymentCount / 52);
+                const w = paymentCount % 52;
+                let t = `~${y} year${y > 1 ? 's' : ''}`;
+                if (w > 0) t += ` ${w} week${w > 1 ? 's' : ''}`;
+                return t;
+            }
+            return `~${paymentCount} week${paymentCount > 1 ? 's' : ''}`;
+        } else { // daily
+            if (paymentCount >= 365) {
+                const y = Math.floor(paymentCount / 365);
+                const d = Math.floor((paymentCount % 365) / 30);
+                let t = `~${y} year${y > 1 ? 's' : ''}`;
+                if (d > 0) t += ` ${d} month${d > 1 ? 's' : ''}`;
+                return t;
+            } else if (paymentCount >= 30) {
+                const m = Math.floor(paymentCount / 30);
+                return `~${m} month${m > 1 ? 's' : ''}`;
+            }
+            return `~${paymentCount} day${paymentCount > 1 ? 's' : ''}`;
+        }
+    }
+
+    // Debt calculator - bidirectional auto-calculation
+    function updateDebtCalculator() {
+        const paymentType = document.getElementById('recurring-payment-type').value;
+        if (paymentType !== 'debt') return;
+
+        const totalAmount = parseFloat(document.getElementById('recurring-total-amount').value) || 0;
+        const paidAmount = parseFloat(document.getElementById('recurring-paid-amount').value) || 0;
+        const frequency = document.getElementById('recurring-frequency-select').value;
+        const startDateValue = document.getElementById('recurring-start-date').value;
+        const endDateValue = document.getElementById('recurring-end-date').value;
+        const method = document.querySelector('input[name="debt-method"]:checked')?.value || 'by-amount';
+        
+        const durationEl = document.getElementById('debt-calc-duration');
+        const endDateEl = document.getElementById('debt-calc-end-date');
+        const amountInput = document.getElementById('recurring-amount');
+        
+        const freqLabel = { daily: 'day', weekly: 'week', monthly: 'month', yearly: 'year' };
+        const freqLabelPlural = { daily: 'days', weekly: 'weeks', monthly: 'months', yearly: 'years' };
+
+        if (totalAmount <= 0) {
+            durationEl.textContent = 'Enter total debt amount to begin';
+            endDateEl.textContent = '';
+            return;
+        }
+
+        const remaining = Math.max(0, totalAmount - paidAmount);
+        
+        if (remaining <= 0) {
+            durationEl.textContent = '✓ Debt is already fully paid!';
+            endDateEl.textContent = '';
+            amountInput.value = '0';
+            return;
+        }
+
+        const startDate = startDateValue ? new Date(startDateValue) : new Date();
+
+        if (method === 'by-date') {
+            // Auto-calculate payment amount from end date
+            if (!endDateValue) {
+                durationEl.textContent = 'Set an end date to auto-calculate payment amount';
+                endDateEl.textContent = '';
+                amountInput.value = '';
+                return;
+            }
+            
+            const endDate = new Date(endDateValue);
+            const payments = countPaymentsBetween(startDate, endDate, frequency);
+            
+            if (payments <= 0) {
+                durationEl.textContent = 'End date must be after start date';
+                endDateEl.textContent = '';
+                amountInput.value = '';
+                return;
+            }
+            
+            const calculatedAmount = Math.ceil((remaining / payments) * 100) / 100;
+            amountInput.value = calculatedAmount.toFixed(2);
+            
+            const label = payments === 1 ? freqLabel[frequency] : freqLabelPlural[frequency];
+            durationEl.textContent = `${payments} ${label || 'payments'} × ${calculatedAmount.toFixed(2)} = ${remaining.toFixed(2)}`;
+            endDateEl.textContent = `Payoff by: ${endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+            
+        } else {
+            // Auto-calculate end date from payment amount
+            const paymentAmount = parseFloat(amountInput.value) || 0;
+            
+            if (paymentAmount <= 0) {
+                durationEl.textContent = 'Enter a payment amount to see estimated duration';
+                endDateEl.textContent = '';
+                return;
+            }
+            
+            const paymentCount = Math.ceil(remaining / paymentAmount);
+            const durationText = formatDuration(paymentCount, frequency);
+            const label = paymentCount === 1 ? freqLabel[frequency] : freqLabelPlural[frequency];
+            
+            durationEl.textContent = `Estimated duration: ${durationText} (${paymentCount} ${label || 'payments'})`;
+            
+            const payoffDate = advanceDate(startDate, frequency, paymentCount);
+            endDateEl.textContent = `Estimated payoff: ${payoffDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+        }
+    }
+
+    // Attach debt calculator listeners
+    ['recurring-total-amount', 'recurring-paid-amount', 'recurring-amount', 'recurring-start-date', 'recurring-end-date'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updateDebtCalculator);
+            el.addEventListener('change', updateDebtCalculator);
+        }
+    });
+    // Also recalculate when frequency changes & update label
+    document.getElementById('recurring-frequency-select')?.addEventListener('change', () => {
+        if (document.getElementById('recurring-payment-type').value === 'debt') {
+            applyDebtMethod();
+        }
+        updateDebtCalculator();
+    });
+
     if (elements.saveRecurringBtn) {
         elements.saveRecurringBtn.addEventListener('click', async () => {
             const id = document.getElementById('recurring-transaction-id').value;
             const name = document.getElementById('recurring-name').value.trim();
             let amount = parseFloat(document.getElementById('recurring-amount').value);
             const startDateValue = document.getElementById('recurring-start-date').value;
+            const paymentType = document.getElementById('recurring-payment-type').value;
             
-            if (!name || isNaN(amount) || !startDateValue) {
-                return ui.showErrorToast('Name, amount, and start date are required.');
+            if (!name || !startDateValue) {
+                return ui.showErrorToast('Name and start date are required.');
             }
 
-            const type = document.querySelector('input[name="transaction-type-recurring"]:checked').value;
-            if (type === 'expense') {
+            // Validate debt-specific fields
+            if (paymentType === 'debt') {
+                const totalAmount = parseFloat(document.getElementById('recurring-total-amount').value);
+                if (isNaN(totalAmount) || totalAmount <= 0) {
+                    return ui.showErrorToast('Total debt amount is required for debt payments.');
+                }
+                const method = document.querySelector('input[name="debt-method"]:checked')?.value || 'by-amount';
+                if (method === 'by-date') {
+                    const endDateValue = document.getElementById('recurring-end-date').value;
+                    if (!endDateValue) {
+                        return ui.showErrorToast('End date is required when calculating by date.');
+                    }
+                    // Re-read amount since it was auto-calculated
+                    amount = parseFloat(document.getElementById('recurring-amount').value);
+                }
+                if (isNaN(amount) || amount <= 0) {
+                    return ui.showErrorToast('Payment amount could not be calculated. Check your inputs.');
+                }
+                // Force expense for debt
                 amount = -Math.abs(amount);
+            } else {
+                if (isNaN(amount)) {
+                    return ui.showErrorToast('Amount is required.');
+                }
+                const type = document.querySelector('input[name="transaction-type-recurring"]:checked').value;
+                if (type === 'expense') {
+                    amount = -Math.abs(amount);
+                }
             }
 
             const data = {
@@ -423,6 +696,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 frequency: document.getElementById('recurring-frequency-select').value,
                 start_date: new Date(startDateValue).toISOString(),
                 end_date: document.getElementById('recurring-end-date').value ? new Date(document.getElementById('recurring-end-date').value).toISOString() : null,
+                payment_type: paymentType,
+                total_amount: paymentType === 'debt' ? parseFloat(document.getElementById('recurring-total-amount').value) || null : null,
+                paid_amount: paymentType === 'debt' ? parseFloat(document.getElementById('recurring-paid-amount').value) || 0 : 0,
             };
 
             if (id) {

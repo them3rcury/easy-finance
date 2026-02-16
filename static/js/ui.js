@@ -334,11 +334,42 @@ export function renderRecurringTransactions(container, items, currencySymbol, ed
         const formattedAmount = `${currencySymbol}${formatNumber(Math.abs(item.amount))}`;
         const nextDueDate = new Date(item.next_due_date).toLocaleDateString();
 
+        const isDebt = item.payment_type === 'debt';
+        const badgeHtml = isDebt 
+            ? `<span class="recurring-item-badge"><span class="material-icons-outlined">credit_card</span>Debt</span>` 
+            : '';
+        
+        let progressHtml = '';
+        if (isDebt && item.total_amount) {
+            const percent = item.progress_percent || 0;
+            const paid = item.paid_amount || 0;
+            const total = item.total_amount;
+            const remaining = Math.max(0, total - paid);
+            const paymentsLeft = item.payments_remaining || 0;
+            
+            const freqLabels = { daily: 'day', weekly: 'week', monthly: 'month', yearly: 'year' };
+            const freqLabelsPlural = { daily: 'days', weekly: 'weeks', monthly: 'months', yearly: 'years' };
+            const freqLabel = paymentsLeft === 1 ? (freqLabels[item.frequency] || 'payment') : (freqLabelsPlural[item.frequency] || 'payments');
+            
+            progressHtml = `
+                <div class="debt-progress-container">
+                    <div class="debt-progress-bar">
+                        <div class="debt-progress-fill" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="debt-progress-info">
+                        <span>${currencySymbol}${formatNumber(paid)} / ${currencySymbol}${formatNumber(total)}</span>
+                        <span>${paymentsLeft > 0 ? `~${paymentsLeft} ${freqLabel} left` : (percent >= 100 ? 'Paid off!' : '')}</span>
+                    </div>
+                </div>
+            `;
+        }
+
         li.innerHTML = `
             <div class="recurring-item-header">
-                <span class="recurring-item-name">${item.name}</span>
+                <span class="recurring-item-name">${item.name} ${badgeHtml}</span>
                 <span class="recurring-item-amount ${amountClass}">${formattedAmount}</span>
             </div>
+            ${progressHtml}
             <div class="recurring-item-details">
                 <span class="recurring-item-info">Next: ${nextDueDate} &bull; ${item.account_name}</span>
                 <div class="recurring-item-actions">
@@ -378,6 +409,43 @@ export function populateRecurringForm(item) {
     document.getElementById('recurring-start-date').value = item.start_date.split('T')[0];
     document.getElementById('recurring-end-date').value = item.end_date ? item.end_date.split('T')[0] : '';
     
+    // Handle payment type
+    const paymentType = item.payment_type || 'standard';
+    document.getElementById('recurring-payment-type').value = paymentType;
+    
+    document.querySelectorAll('.recurring-type-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.paymentType === paymentType);
+    });
+    
+    const isDebt = paymentType === 'debt';
+    document.getElementById('debt-details-section').style.display = isDebt ? '' : 'none';
+    document.getElementById('debt-calc-section').style.display = isDebt ? '' : 'none';
+    document.getElementById('debt-calculator-info').style.display = isDebt ? '' : 'none';
+    document.getElementById('recurring-income-expense-toggle').style.display = isDebt ? 'none' : '';
+    
+    if (isDebt) {
+        document.getElementById('recurring-total-amount').value = item.total_amount || '';
+        document.getElementById('recurring-paid-amount').value = item.paid_amount || 0;
+        // Force expense for debt
+        document.getElementById('type-expense-recurring').checked = true;
+        // Default to by-amount method when editing
+        document.querySelector('input[name="debt-method"][value="by-amount"]').checked = true;
+        const amountInput = document.getElementById('recurring-amount');
+        amountInput.readOnly = false;
+        amountInput.classList.remove('auto-calculated');
+        const freqNames = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' };
+        amountInput.placeholder = `${freqNames[item.frequency] || ''} Payment Amount`;
+        document.getElementById('debt-amount-label').textContent = `${freqNames[item.frequency] || ''} Payment Amount`;
+    }
+
+    // Switch to form view on mobile
+    document.querySelectorAll('.recurring-view-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.view === 'form');
+    });
+    document.querySelectorAll('[data-view-panel]').forEach(panel => {
+        panel.style.display = panel.dataset.viewPanel === 'form' ? '' : 'none';
+    });
+
     document.getElementById('save-recurring-btn').textContent = 'Save Changes';
     document.getElementById('cancel-recurring-edit-btn').style.display = 'inline-flex';
 }
@@ -402,6 +470,36 @@ export function resetRecurringForm() {
     document.getElementById('recurring-frequency-select').value = 'monthly';
     document.getElementById('recurring-start-date').value = new Date().toISOString().split('T')[0];
     document.getElementById('recurring-end-date').value = '';
+
+    // Reset payment type
+    document.getElementById('recurring-payment-type').value = 'standard';
+    document.querySelectorAll('.recurring-type-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.paymentType === 'standard');
+    });
+    document.getElementById('debt-details-section').style.display = 'none';
+    document.getElementById('debt-calc-section').style.display = 'none';
+    document.getElementById('debt-calculator-info').style.display = 'none';
+    document.getElementById('recurring-income-expense-toggle').style.display = '';
+    document.getElementById('recurring-total-amount').value = '';
+    document.getElementById('recurring-paid-amount').value = '0';
+    
+    // Reset amount input state
+    const amountInput = document.getElementById('recurring-amount');
+    amountInput.readOnly = false;
+    amountInput.classList.remove('auto-calculated');
+    amountInput.placeholder = 'Amount';
+    
+    // Reset debt method radio
+    const byAmountRadio = document.querySelector('input[name="debt-method"][value="by-amount"]');
+    if (byAmountRadio) byAmountRadio.checked = true;
+
+    // Switch back to list view on mobile
+    document.querySelectorAll('.recurring-view-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.view === 'list');
+    });
+    document.querySelectorAll('[data-view-panel]').forEach(panel => {
+        panel.style.display = panel.dataset.viewPanel === 'list' ? '' : 'none';
+    });
 
     document.getElementById('save-recurring-btn').textContent = 'Add Recurring Transaction';
     document.getElementById('cancel-recurring-edit-btn').style.display = 'none';

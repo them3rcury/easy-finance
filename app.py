@@ -90,10 +90,24 @@ class RecurringTransaction(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-
+    payment_type = db.Column(db.String(10), nullable=False, default='standard')  # 'standard' or 'debt'
+    total_amount = db.Column(db.Float, nullable=True)  # Total debt amount (for debt type)
+    paid_amount = db.Column(db.Float, nullable=False, default=0.0)  # Amount paid so far (for debt type)
 
 with app.app_context():
     db.create_all()
+    # Migrate existing databases to add new columns
+    with db.engine.connect() as conn:
+        for col, col_def in [
+            ('payment_type', "VARCHAR(10) NOT NULL DEFAULT 'standard'"),
+            ('total_amount', 'FLOAT'),
+            ('paid_amount', 'FLOAT NOT NULL DEFAULT 0.0'),
+        ]:
+            try:
+                conn.execute(db.text(f'ALTER TABLE recurring_transaction ADD COLUMN {col} {col_def}'))
+                conn.commit()
+            except Exception:
+                pass  # Column already exists
 
 def calculate_next_due(start_date, frequency):
     if frequency == 'daily':
@@ -122,9 +136,21 @@ def process_recurring_transactions(user_id):
                 rt.is_active = False
                 break
 
+            # For debt payments, check if fully paid
+            if rt.payment_type == 'debt' and rt.total_amount:
+                remaining = rt.total_amount - rt.paid_amount
+                if remaining <= 0:
+                    rt.is_active = False
+                    break
+                # Use the smaller of payment amount or remaining balance
+                actual_payment = min(abs(rt.amount), remaining)
+                payment_amount = -actual_payment  # Debt payments are always expenses
+            else:
+                payment_amount = rt.amount
+
             new_trans = Transaction(
                 description=rt.name,
-                amount=rt.amount,
+                amount=payment_amount,
                 date=current_due_date,
                 account_id=rt.account_id,
                 category_id=rt.category_id
@@ -132,7 +158,14 @@ def process_recurring_transactions(user_id):
             db.session.add(new_trans)
             
             if rt.account:
-                rt.account.balance += rt.amount
+                rt.account.balance += payment_amount
+            
+            # Track paid amount for debt payments
+            if rt.payment_type == 'debt' and rt.total_amount:
+                rt.paid_amount += abs(payment_amount)
+                if rt.paid_amount >= rt.total_amount:
+                    rt.is_active = False
+                    break
             
             next_due = calculate_next_due(current_due_date, rt.frequency)
             if not next_due:
@@ -586,7 +619,7 @@ def get_recurring_transactions():
     recurring_txns = RecurringTransaction.query.filter_by(user_id=current_user.id).order_by(RecurringTransaction.next_due_date.asc()).all()
     results = []
     for r in recurring_txns:
-        results.append({
+        item = {
             'id': r.id,
             'name': r.name,
             'amount': r.amount,
@@ -597,8 +630,22 @@ def get_recurring_transactions():
             'account_id': r.account_id,
             'account_name': r.account.name if r.account else 'N/A',
             'category_id': r.category_id,
-            'is_active': r.is_active
-        })
+            'is_active': r.is_active,
+            'payment_type': r.payment_type or 'standard',
+            'total_amount': r.total_amount,
+            'paid_amount': r.paid_amount or 0.0
+        }
+        # Calculate estimated payments remaining for debt payments
+        if r.payment_type == 'debt' and r.total_amount and r.amount:
+            remaining = max(0, r.total_amount - (r.paid_amount or 0))
+            payment_amount = abs(r.amount)
+            if payment_amount > 0:
+                import math
+                item['payments_remaining'] = math.ceil(remaining / payment_amount)
+            else:
+                item['payments_remaining'] = 0
+            item['progress_percent'] = min(100, round(((r.paid_amount or 0) / r.total_amount) * 100, 1)) if r.total_amount > 0 else 0
+        results.append(item)
     return jsonify(results)
 
 @app.route('/api/recurring', methods=['POST'])
@@ -628,6 +675,10 @@ def add_recurring_transaction():
     except (ValueError, KeyError) as e:
         return jsonify({'error': f'Invalid date format or missing date: {e}'}), 400
 
+    payment_type = data.get('payment_type', 'standard')
+    total_amount = float(data['total_amount']) if data.get('total_amount') else None
+    paid_amount = float(data.get('paid_amount', 0))
+
     new_rt = RecurringTransaction(
         name=name,
         amount=float(data['amount']),
@@ -637,7 +688,10 @@ def add_recurring_transaction():
         end_date=end_date,
         account_id=int(data['account_id']),
         category_id=int(data['category_id']) if data.get('category_id') else None,
-        user_id=current_user.id
+        user_id=current_user.id,
+        payment_type=payment_type,
+        total_amount=total_amount,
+        paid_amount=paid_amount
     )
     db.session.add(new_rt)
     db.session.commit()
@@ -678,6 +732,9 @@ def update_recurring_transaction(rt_id):
     rt.end_date = end_date
     rt.account_id = int(data['account_id'])
     rt.category_id = int(data['category_id']) if data.get('category_id') else None
+    rt.payment_type = data.get('payment_type', 'standard')
+    rt.total_amount = float(data['total_amount']) if data.get('total_amount') else None
+    rt.paid_amount = float(data.get('paid_amount', rt.paid_amount or 0))
     
     db.session.commit()
     return jsonify({'message': 'Recurring transaction updated'})
