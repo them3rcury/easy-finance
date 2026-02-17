@@ -107,6 +107,14 @@ with app.app_context():
     db.create_all()
     # Migrate existing databases to add new columns
     with db.engine.connect() as conn:
+        # User table migrations
+        try:
+            conn.execute(db.text("ALTER TABLE user ADD COLUMN gemini_api_key VARCHAR(255)"))
+            conn.commit()
+        except Exception:
+            pass  # Column already exists
+
+        # Recurring transaction table migrations
         for col, col_def in [
             ('payment_type', "VARCHAR(10) NOT NULL DEFAULT 'standard'"),
             ('total_amount', 'FLOAT'),
