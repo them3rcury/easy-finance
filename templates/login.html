@@ -2,40 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Finance Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sign In — Easy Finance</title>
+    <meta name="description" content="Sign in to your Easy Finance dashboard.">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <script>
         (function() {
-            function setTheme(theme) {
-                document.documentElement.setAttribute('data-theme', theme);
-                localStorage.setItem('theme', theme);
-            }
             const savedTheme = localStorage.getItem('theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (savedTheme) {
-                setTheme(savedTheme);
-            } else {
-                setTheme(prefersDark ? 'dark' : 'light');
-            }
+            document.documentElement.setAttribute('data-theme', savedTheme || (prefersDark ? 'dark' : 'light'));
         })();
     </script>
 </head>
 <body>
     <div class="login-container">
-        <h2>Login to your Dashboard</h2>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <p class="flash-message {{ category }}">{{ message }}</p>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        <form method="POST" action="{{ url_for('login') }}">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit" class="button-primary">Login</button>
-        </form>
+        <div class="login-card">
+            <div class="login-form">
+                <div class="login-brand">
+                    <span class="material-icons-outlined" style="font-size: 36px; color: var(--primary); margin: 0 auto var(--space-2); display: block; text-align: center;">account_balance_wallet</span>
+                    <h2>Welcome Back</h2>
+                    <p class="form-subtitle">Sign in to your finance dashboard</p>
+                </div>
+
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="flash-message">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('login') }}" style="display: flex; flex-direction: column; gap: var(--space-4);">
+                    <div class="input-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" placeholder="Enter your username" required autofocus>
+                    </div>
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="button-primary button-full">
+                        <span class="material-icons-outlined" style="font-size: 18px;">login</span>
+                        Sign In
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </body>
 </html>

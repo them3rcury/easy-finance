@@ -1,29 +1,20 @@
-/* ============================================
-   RECURRING TRANSACTIONS MODAL — Mobile-first
-   ============================================ */
-
-/* Modal specific overrides */
-.recurring-modal {
-    max-width: 860px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    padding: 1.25rem;
+/* ── Wide Modal Override ── */
+#manage-recurring-modal .modal-content {
+    max-width: 720px;
 }
 
-.recurring-modal h2 {
-    margin-bottom: 1rem;
-    font-size: 1.15rem;
+#manage-recurring-modal .modal-content.wide {
+    max-width: 720px;
 }
 
-/* ── Mobile View Tabs ── */
+/* ── Mobile View Tabs (List vs Form) ── */
 .recurring-view-tabs {
     display: flex;
-    gap: 0.25rem;
+    gap: var(--space-1);
     background: var(--secondary);
     border-radius: var(--radius);
     padding: 3px;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-4);
     border: 1px solid var(--border);
 }
 
@@ -32,17 +23,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    padding: 0.55rem 0.5rem;
+    gap: var(--space-1);
+    text-align: center;
+    padding: var(--space-2) var(--space-3);
     border: none;
-    border-radius: calc(var(--radius) - 3px);
     background: transparent;
     color: var(--muted-foreground);
-    cursor: pointer;
-    font-size: 13px;
+    font-family: var(--font-family);
+    font-size: var(--text-sm);
     font-weight: 500;
-    font-family: inherit;
-    transition: all 0.2s ease;
+    cursor: pointer;
+    border-radius: calc(var(--radius) - 3px);
+    transition: all var(--duration-fast) var(--ease-out);
 }
 
 .recurring-view-tab .material-icons-outlined {
@@ -50,145 +42,187 @@
 }
 
 .recurring-view-tab.active {
-    background: var(--card);
-    color: var(--foreground);
-    box-shadow: 0 1px 3px hsla(0, 0%, 0%, 0.15);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: var(--shadow-sm);
 }
 
-/* ── Container ── */
-.recurring-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-}
-
-/* ── Section Titles ── */
-.recurring-section-title {
-    margin: 0 0 1rem 0;
-    font-weight: 600;
-    font-size: 0.95rem;
-    display: none; /* Replaced by mobile tabs on small screens */
-}
-
-/* ── List Section ── */
-.recurring-list-section {
-    min-height: 0;
-}
-
-.recurring-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 50vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    padding-right: 0.25rem;
-}
-
-.recurring-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    padding: 0.85rem;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background-color: var(--secondary);
-    transition: all 0.2s ease-in-out;
-}
-
-.recurring-item:hover {
-    border-color: var(--ring);
-}
-
-.recurring-item.inactive {
-    opacity: 0.6;
-    background-color: transparent;
-    border-style: dashed;
-}
-
-.recurring-item-header, .recurring-item-details {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.recurring-item-name {
-    font-weight: 600;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.recurring-item-amount {
-    font-weight: 600;
-    white-space: nowrap;
-    font-size: 14px;
-}
-
-.recurring-item-info {
-    font-size: 12px;
-    color: var(--muted-foreground);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.recurring-item-actions {
-    display: flex;
-    gap: 0.15rem;
-}
-
-.recurring-item .icon-btn {
-    width: 30px;
-    height: 30px;
-}
-
-.recurring-item-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-    font-size: 10px;
-    padding: 0.1rem 0.4rem;
-    border-radius: 10px;
-    background: hsla(216, 90%, 65%, 0.15);
-    color: hsl(216, 90%, 65%);
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.recurring-item-badge .material-icons-outlined {
-    font-size: 12px;
-}
-
-/* ── Form Section ── */
-.recurring-form-section {
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
-    margin-top: 1rem;
-}
-
-/* On mobile, form panel is initially hidden (list tab is default active) */
-@media (max-width: 768px) {
-    .recurring-form-section[data-view-panel="form"] {
+/* Hide tabs on desktop — both panels show side-by-side */
+@media (min-width: 769px) {
+    .recurring-view-tabs {
         display: none;
     }
 }
 
-/* ── Type Tabs (Standard / Debt) ── */
+/* ── Panels Layout (the container class from HTML) ── */
+.recurring-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+/* Mobile: form panel starts hidden, toggled by JS tabs */
+@media (max-width: 768px) {
+    .recurring-container [data-view-panel="form"] {
+        display: none;
+    }
+}
+
+@media (min-width: 769px) {
+    .recurring-container {
+        flex-direction: row;
+    }
+
+    /* On desktop always show both panels */
+    .recurring-container [data-view-panel] {
+        display: block !important;
+    }
+
+    .recurring-container .recurring-list-section {
+        flex: 0 0 45%;
+        max-height: 500px;
+        overflow-y: auto;
+        padding-right: var(--space-3);
+        border-right: 1px solid var(--border-subtle);
+    }
+
+    .recurring-container .recurring-form-section {
+        flex: 1;
+    }
+}
+
+/* ── Section Title inside modal ── */
+.recurring-section-title {
+    font-size: var(--text-md);
+    font-weight: 600;
+    margin-bottom: var(--space-3);
+    color: var(--foreground);
+}
+
+/* ── List ── */
+.recurring-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.recurring-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-subtle);
+    background: var(--secondary);
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.recurring-item:hover {
+    background: var(--muted);
+    border-color: var(--border);
+}
+
+.recurring-item.inactive {
+    opacity: 0.5;
+}
+
+.recurring-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.recurring-item-name {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--foreground);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recurring-item-meta {
+    font-size: var(--text-xs);
+    color: var(--muted-foreground);
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    margin-top: 2px;
+    flex-wrap: wrap;
+}
+
+.recurring-item-amount {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.recurring-item-amount.negative { color: var(--destructive); }
+.recurring-item-amount.positive { color: var(--success); }
+
+.recurring-item-actions {
+    display: flex;
+    gap: var(--space-1);
+    flex-shrink: 0;
+}
+
+.recurring-item-actions button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.recurring-item-actions button:hover {
+    background: var(--secondary);
+    color: var(--foreground);
+}
+
+.recurring-item-actions .delete-btn:hover {
+    background: var(--destructive-glow);
+    color: var(--destructive);
+}
+
+.recurring-item-actions button .material-icons-outlined {
+    font-size: 16px;
+}
+
+/* ── Debt Progress Bar ── */
+.recurring-debt-progress {
+    width: 100%;
+    height: 4px;
+    background: var(--muted);
+    border-radius: var(--radius-full);
+    margin-top: var(--space-2);
+    overflow: hidden;
+}
+
+.recurring-debt-progress-bar {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-full);
+    transition: width var(--duration-slow) var(--ease-out);
+}
+
+/* ── Type Tabs (Standard vs Debt) ── */
 .recurring-type-tabs {
     display: flex;
-    gap: 0.35rem;
-    margin-bottom: 0.5rem;
+    gap: var(--space-1);
+    background: var(--secondary);
+    border-radius: var(--radius);
+    padding: 3px;
+    border: 1px solid var(--border);
+    margin-bottom: var(--space-3);
 }
 
 .recurring-type-tab {
@@ -196,311 +230,205 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    padding: 0.55rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background-color: transparent;
+    gap: var(--space-1);
+    text-align: center;
+    padding: var(--space-2) var(--space-3);
+    border: none;
+    background: transparent;
     color: var(--muted-foreground);
-    cursor: pointer;
-    font-size: 13px;
+    font-family: var(--font-family);
+    font-size: var(--text-sm);
     font-weight: 500;
-    font-family: inherit;
-    transition: all 0.2s ease;
+    cursor: pointer;
+    border-radius: calc(var(--radius) - 3px);
+    transition: all var(--duration-fast) var(--ease-out);
+    text-decoration: none;
 }
 
 .recurring-type-tab .material-icons-outlined {
-    font-size: 17px;
-}
-
-.recurring-type-tab:hover {
-    background-color: var(--secondary);
-    color: var(--foreground);
+    font-size: 18px;
 }
 
 .recurring-type-tab.active {
-    background-color: var(--primary);
+    background: var(--primary);
     color: var(--primary-foreground);
-    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
 }
 
-/* ── Form Sections ── */
+/* ── Form Section (shared class used in modals) ── */
 .form-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    padding: 0.85rem;
-    background: hsla(222, 25%, 18%, 0.4);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius);
-    border: 1px solid var(--border);
+    padding: var(--space-4);
+    background: var(--gradient-card);
+    margin-bottom: var(--space-3);
 }
 
 .form-section-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: var(--space-3);
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--muted-foreground);
-    padding-bottom: 0.35rem;
-    border-bottom: 1px solid hsla(222, 25%, 40%, 0.2);
+    gap: var(--space-2);
 }
 
 .form-section-label .material-icons-outlined {
-    font-size: 15px;
+    font-size: 18px;
     color: var(--primary);
 }
 
-.debt-section {
-    animation: fadeInSlideUp 0.25s ease-out;
-}
-
-/* ── Form Rows ── */
+/* ── Form Row 2-Column ── */
 .form-row-2col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
 }
 
+.form-row-2col:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+    .form-row-2col {
+        flex-direction: column;
+    }
+}
+
+/* ── Form Field ── */
 .form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    flex: 1;
+    margin-bottom: var(--space-3);
+}
+
+.form-field:last-child {
+    margin-bottom: 0;
 }
 
 .field-label-sm {
-    font-size: 11px;
+    display: block;
+    font-size: var(--text-xs);
     font-weight: 500;
     color: var(--muted-foreground);
-    letter-spacing: 0.2px;
-}
-
-/* ── Debt Method Selector ── */
-.debt-method-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.debt-method-radios {
-    display: flex;
-    gap: 0.35rem;
-}
-
-.debt-method-option {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    padding: 0.5rem 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--muted-foreground);
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-.debt-method-option:has(input:checked) {
-    border-color: var(--primary);
-    background: hsla(216, 90%, 65%, 0.12);
-    color: var(--foreground);
-}
-
-.debt-method-option input[type="radio"] {
-    accent-color: var(--primary);
-    margin: 0;
-    width: 14px;
-    height: 14px;
-}
-
-/* ── Auto-calculated Input ── */
-input.auto-calculated {
-    background: var(--secondary) !important;
-    border-style: dashed !important;
-    color: var(--foreground) !important;
-    opacity: 0.85;
-}
-
-/* ── Debt Calculator Info ── */
-.debt-calculator-info {
-    padding: 0.65rem 0.85rem;
-    border-radius: var(--radius);
-    background: linear-gradient(135deg, hsla(216, 90%, 65%, 0.08), hsla(160, 70%, 55%, 0.08));
-    border: 1px solid hsla(216, 90%, 65%, 0.2);
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.debt-calc-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.4rem;
-    font-size: 12px;
-    color: var(--foreground);
-    line-height: 1.4;
-}
-
-.debt-calc-row .material-icons-outlined {
-    font-size: 15px;
-    color: var(--primary);
-    margin-top: 1px;
-    flex-shrink: 0;
-}
-
-/* ── Debt Progress Bar ── */
-.debt-progress-container {
-    width: 100%;
-    margin-top: 0.2rem;
-}
-
-.debt-progress-bar {
-    width: 100%;
-    height: 5px;
-    border-radius: 3px;
-    background-color: var(--border);
-    overflow: hidden;
-}
-
-.debt-progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, var(--primary), hsl(160, 80%, 55%));
-    transition: width 0.5s ease;
-}
-
-.debt-progress-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.25rem;
-    font-size: 10px;
-    color: var(--muted-foreground);
+    margin-bottom: var(--space-1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* ── Form Actions ── */
 .form-actions {
     display: flex;
-    gap: 0.5rem;
-    justify-content: flex-end;
-    margin-top: 0.5rem;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
 }
 
-.form-actions .button-secondary {
-    background-color: var(--secondary);
-    color: var(--secondary-foreground);
+.form-actions .button-primary {
+    flex: 1;
 }
 
-.form-actions .button-secondary:hover {
-     background-color: var(--border);
+/* ── Debt Calculator Info ── */
+.debt-calculator-info {
+    padding: var(--space-3);
+    background: var(--secondary);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-subtle);
+    margin-top: var(--space-3);
 }
 
-/* ── Compact form inputs inside form-section ── */
-.form-section input[type="number"],
-.form-section input[type="text"],
-.form-section input[type="date"],
-.form-section select {
-    padding: 0.65rem 0.75rem;
-    font-size: 13px;
+.debt-calc-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    padding: var(--space-1) 0;
 }
 
-/* ============================================
-   Desktop (>768px)
-   ============================================ */
-@media (min-width: 769px) {
-    .recurring-modal {
-        padding: 1.75rem;
-    }
-
-    .recurring-modal h2 {
-        font-size: 1.3rem;
-        margin-bottom: 1.25rem;
-    }
-
-    /* Hide mobile view tabs on desktop */
-    .recurring-view-tabs {
-        display: none;
-    }
-
-    /* Show section titles on desktop */
-    .recurring-section-title {
-        display: block;
-    }
-
-    /* Two-column on desktop */
-    .recurring-container {
-        flex-direction: row;
-        gap: 1.5rem;
-    }
-
-    .recurring-list-section {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .recurring-form-section {
-        flex: 1;
-        min-width: 0;
-        border-top: none;
-        margin-top: 0;
-        padding-top: 0;
-        border-left: 1px solid var(--border);
-        padding-left: 1.5rem;
-    }
-
-    .recurring-list {
-        max-height: 60vh;
-    }
-
-    /* Both panels always visible on desktop */
-    .recurring-list-section,
-    .recurring-form-section {
-        display: block !important;
-    }
+.debt-calc-row .material-icons-outlined {
+    font-size: 18px;
+    color: var(--primary);
+    flex-shrink: 0;
 }
 
-/* ============================================
-   Small mobile (<480px)
-   ============================================ */
-@media (max-width: 480px) {
-    .recurring-modal {
-        padding: 1rem;
-        width: 95%;
-    }
+/* ── Debt Method Group ── */
+.debt-method-group {
+    margin-bottom: var(--space-3);
+}
 
-    .recurring-modal h2 {
-        font-size: 1.05rem;
-    }
+.debt-method-radios {
+    display: flex;
+    gap: var(--space-1);
+    background: var(--muted);
+    border-radius: var(--radius);
+    padding: 3px;
+}
 
-    .form-row-2col {
-        grid-template-columns: 1fr;
-    }
+.debt-method-option {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+}
 
-    .recurring-type-tab {
-        font-size: 12px;
-        padding: 0.5rem;
-    }
-    
-    .recurring-type-tab .material-icons-outlined {
-        font-size: 15px;
-    }
+.debt-method-option input[type="radio"] {
+    display: none;
+}
 
-    .debt-method-option {
-        font-size: 11px;
-        padding: 0.45rem;
-    }
+.debt-method-option span {
+    display: block;
+    padding: var(--space-2) var(--space-3);
+    border-radius: calc(var(--radius) - 3px);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--muted-foreground);
+    transition: all var(--duration-fast) var(--ease-out);
+}
 
-    .form-section {
-        padding: 0.7rem;
-    }
+.debt-method-option input[type="radio"]:checked + span {
+    background: var(--card);
+    color: var(--foreground);
+    box-shadow: var(--shadow-sm);
+}
 
-    .form-section-label {
-        font-size: 11px;
-    }
+/* ── Empty List ── */
+.recurring-empty,
+#recurring-empty-message {
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+    color: var(--muted-foreground);
+    font-size: var(--text-sm);
+}
+
+.recurring-empty .material-icons-outlined,
+#recurring-empty-message .material-icons-outlined {
+    font-size: 40px;
+    display: block;
+    margin: 0 auto var(--space-2);
+    opacity: 0.5;
+}
+
+/* ── Empty list message generic ── */
+.empty-list-message {
+    text-align: center;
+    padding: var(--space-6) var(--space-4);
+    color: var(--muted-foreground);
+    font-size: var(--text-sm);
+}
+
+.empty-list-message .material-icons-outlined {
+    font-size: 36px;
+    display: block;
+    margin: 0 auto var(--space-2);
+    opacity: 0.5;
+}
+
+/* ── Income/Expense Toggle override styling ── */
+.recurring-modal .radio-group {
+    margin-bottom: var(--space-3);
+}
+
+/* ── Recurring Modal Input styling ── */
+.recurring-modal .modal-form > input,
+.recurring-modal .modal-form > select {
+    margin-bottom: var(--space-3);
 }

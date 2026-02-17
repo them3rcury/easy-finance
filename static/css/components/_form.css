@@ -1,87 +1,77 @@
-input[type="text"],
-input[type="password"],
-input[type="url"],
-input[type="search"],
-input[type="number"],
-input[type="date"],
-input[type="file"],
-select {
+/* ── Text Inputs, Selects, Textareas ── */
+.settings-input,
+.modal-content input[type="text"],
+.modal-content input[type="number"],
+.modal-content input[type="date"],
+.modal-content input[type="search"],
+.modal-content input[type="password"],
+.modal-content select,
+.modal-content textarea {
     width: 100%;
-    padding: 0.85rem 1rem;
+    padding: var(--space-3);
     border: 1px solid var(--border);
-    background-color: var(--secondary);
     border-radius: var(--radius);
-    font-size: 14px;
+    background: var(--secondary);
     color: var(--foreground);
-    transition: all 0.2s ease-in-out;
+    font-family: var(--font-family);
+    font-size: var(--text-base);
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out),
+                background-color var(--duration-fast) var(--ease-out);
+    min-height: 42px;
+}
+
+.settings-input:focus,
+.modal-content input:focus,
+.modal-content select:focus,
+.modal-content textarea:focus {
     outline: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
+    border-color: var(--primary);
+    background: var(--card);
+    box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-select {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2371717a' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 16px 12px;
+.settings-input::placeholder,
+.modal-content input::placeholder {
+    color: var(--muted-foreground);
 }
 
-
-input[type="text"]:focus,
-input[type="password"]:focus,
-input[type="url"]:focus,
-input[type="search"]:focus,
-input[type="number"]:focus,
-input[type="date"]:focus,
-input[type="file"]:focus,
-select:focus {
-    border-color: var(--ring);
-    box-shadow: 0 0 0 3px hsla(221, 83%, 60%, 0.2);
-    background-color: var(--background);
+/* Mobile touch targets */
+@media (max-width: 768px) {
+    .settings-input,
+    .modal-content input,
+    .modal-content select {
+        min-height: 44px;
+        font-size: 16px; /* Prevent iOS zoom */
+    }
 }
 
-.flash-message {
-    margin-top: 1.5rem;
-    color: var(--destructive);
-    font-size: 14px;
-    background-color: hsla(0, 72%, 51%, 0.1);
-    padding: 0.5rem;
-    border-radius: var(--radius);
+/* ── Input Groups ── */
+.input-group {
+    margin-bottom: var(--space-4);
 }
 
-.flash-message.success {
-    color: hsl(140, 60%, 60%);
-    background-color: hsla(140, 60%, 40%, 0.2);
-}
-
-.setting-row {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.setting-row:last-child {
-    border-bottom: none;
-}
-
-.setting-row .settings-input {
-    width: 100%;
-}
-
-.setting-row > label {
+.input-group label {
+    display: block;
+    font-size: var(--text-sm);
     font-weight: 500;
-    color: var(--card-foreground);
+    color: var(--foreground);
+    margin-bottom: var(--space-2);
 }
 
+.input-group .input-hint {
+    font-size: var(--text-xs);
+    color: var(--muted-foreground);
+    margin-top: var(--space-1);
+}
+
+/* ── Radio Buttons (Segmented Control) ── */
 .radio-group {
     display: flex;
-    background-color: var(--secondary);
+    gap: var(--space-1);
+    background: var(--secondary);
     border-radius: var(--radius);
-    padding: 4px;
+    padding: 3px;
     border: 1px solid var(--border);
 }
 
@@ -92,72 +82,200 @@ select:focus {
 .radio-group label {
     flex: 1;
     text-align: center;
-    padding: 0.5rem 1rem;
-    border-radius: calc(var(--radius) - 4px);
-    cursor: pointer;
-    font-size: 14px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: calc(var(--radius) - 3px);
+    font-size: var(--text-sm);
     font-weight: 500;
     color: var(--muted-foreground);
-    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
+    user-select: none;
 }
 
 .radio-group input[type="radio"]:checked + label {
-    background-color: var(--card);
-    color: var(--foreground);
-    box-shadow: 0 1px 3px hsla(0, 0%, 0%, 0.1);
-}
-
-#search-bar {
-    height: 100%;
-    width: 100%;
-    padding: 0.85rem 1rem 0.85rem 40px;
-    background-color: transparent;
-    border: none;
-    opacity: 0;
-    transition: opacity 0.3s ease 0.1s;
-    cursor: pointer;
-}
-
-.search-container.focused #search-bar {
-    opacity: 1;
-    cursor: text;
-}
-
-.input-with-icon-picker input[type="text"] {
-    flex-grow: 1;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0.85rem 1rem;
-    height: 100%;
-    width: 100%;
-}
-
-.input-with-icon-picker input[type="text"]:focus {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-}
-
-/* File Input Styling */
-input[type="file"] {
-    padding: 0.5rem; /* Slightly less padding for file input container */
-}
-
-input[type="file"]::file-selector-button {
-    margin-right: 1rem;
-    border: none;
     background: var(--primary);
-    padding: 0.5rem 1rem;
-    border-radius: calc(var(--radius) - 4px);
     color: var(--primary-foreground);
-    cursor: pointer;
-    transition: background 0.2s ease-in-out;
-    font-weight: 500;
-    font-size: 0.85rem;
-    font-family: inherit;
+    box-shadow: var(--shadow-sm);
 }
 
-input[type="file"]::file-selector-button:hover {
-    background: var(--ring);
+/* ── Settings ── */
+.settings-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-row:last-child {
+    border-bottom: none;
+}
+
+.settings-row label {
+    flex: 0 0 120px;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.settings-row .settings-input {
+    flex: 1;
+}
+
+@media (max-width: 480px) {
+    .settings-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
+    }
+
+    .settings-row label {
+        flex: none;
+    }
+}
+
+/* ── Color Scheme / Theme Selection ── */
+.radio-options-row {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.radio-options-row input[type="radio"] {
+    display: none;
+}
+
+.radio-options-row label {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: var(--text-sm);
+    color: var(--foreground);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.radio-options-row input[type="radio"]:checked + label {
+    border-color: var(--primary);
+    background: var(--primary-glow);
+    color: var(--primary);
+}
+
+/* ── Flash Messages ── */
+.flash-message {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius);
+    margin-bottom: var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    background: var(--destructive-glow);
+    color: var(--destructive);
+    border: 1px solid var(--destructive);
+}
+
+.flash-message.success {
+    background: var(--success-glow);
+    color: var(--success);
+    border-color: var(--success);
+}
+
+/* ── File Input ── */
+.file-input-wrapper {
+    position: relative;
+}
+
+.file-input-wrapper input[type="file"] {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--secondary);
+    color: var(--foreground);
+    font-family: var(--font-family);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.file-input-wrapper input[type="file"]:hover {
+    border-color: var(--primary);
+    background: var(--primary-glow);
+}
+
+/* ── Checkbox ── */
+input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}
+
+/* ── Import Status ── */
+#import-status {
+    font-size: var(--text-sm);
+    min-height: 1.2em;
+    margin-top: var(--space-2);
+}
+
+/* ── Auto-calculated field indicator ── */
+input.auto-calculated {
+    background: var(--muted) !important;
+    color: var(--success) !important;
+    font-weight: 600;
+}
+
+/* ── Login Form ── */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.login-form h2 {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-align: center;
+    margin-bottom: var(--space-2);
+}
+
+.login-form .form-subtitle {
+    font-size: var(--text-sm);
+    color: var(--muted-foreground);
+    text-align: center;
+    margin-top: calc(var(--space-1) * -1);
+}
+
+.login-form input {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--secondary);
+    color: var(--foreground);
+    font-family: var(--font-family);
+    font-size: var(--text-base);
+    min-height: 46px;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.login-form input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    background: var(--card);
+}
+
+.login-form .button-primary {
+    margin-top: var(--space-2);
+    min-height: 46px;
+    font-size: var(--text-base);
 }

@@ -1,226 +1,250 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-color-scheme="default">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ account.name }} - Account Details</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ account.name }} — Easy Finance</title>
+    <meta name="description" content="View transactions and analytics for {{ account.name }}.">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            
-            const savedColorScheme = localStorage.getItem('dashboardColorScheme') || 'default';
-            document.documentElement.setAttribute('data-color-scheme', savedColorScheme);
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', savedTheme || (prefersDark ? 'dark' : 'light'));
+            const savedDensity = localStorage.getItem('density');
+            if (savedDensity) document.documentElement.setAttribute('data-density', savedDensity);
+            const savedColorScheme = localStorage.getItem('color-scheme');
+            if (savedColorScheme) document.documentElement.setAttribute('data-color-scheme', savedColorScheme);
         })();
     </script>
 </head>
 <body>
-    <header>
-        <a href="{{ url_for('dashboard') }}" class="back-button icon-btn" title="Back to Dashboard">
-            <span class="material-icons-outlined">arrow_back</span>
-        </a>
-        <h1>{{ account.name }}</h1>
-        <div class="header-actions">
-             <button id="open-add-transaction-modal-btn" class="button-primary" data-account-id="{{ account.id }}">
-                <span class="material-icons-outlined">add</span>
-                Add Transaction
-            </button>
-            <div class="account-balance-details">
-                <span>Total Balance</span>
-                <span>{{ current_user.currency }}{{ account.balance|format_number }}</span>
-            </div>
-            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
-        </div>
-    </header>
-
-    <main class="details-page-container">
-        <div class="summary-stats">
-            <div class="stat-card">
-                <h4>Total Income</h4>
-                <p class="positive">{{ current_user.currency }}{{ summary_stats.total_income|format_number }}</p>
-                <small>Last 6 months</small>
-            </div>
-            <div class="stat-card">
-                <h4>Total Expense</h4>
-                <p class="negative">{{ current_user.currency }}{{ summary_stats.total_expense|format_number }}</p>
-                <small>Last 6 months</small>
-            </div>
-            <div class="stat-card">
-                <h4>Net Flow</h4>
-                <p class="{% if summary_stats.net_flow >= 0 %}positive{% else %}negative{% endif %}">
-                    {{ current_user.currency }}{{ summary_stats.net_flow|format_number }}
-                </p>
-                <small>Last 6 months</small>
-            </div>
-        </div>
-
-        <div class="chart-container account">
-             <canvas id="transactionChart"></canvas>
-        </div>
-
-    <div class="transactions-container account">
-            <div class="account-header">
-                <h3><span class="material-icons-outlined">receipt_long</span><span>Recent Transactions</span></h3>
-            </div>
-
-            <div class="filter-bar">
-                <div class="search-group">
-                    <span class="material-icons-outlined search-icon">search</span>
-                    <input type="text" id="filter-search" placeholder="Search transactions..." value="{{ request.args.get('search', '') }}">
+    <div class="app-container">
+        <!-- ── Header ── -->
+        <header class="app-header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <a href="{{ url_for('dashboard') }}" class="back-link" title="Back to Dashboard">
+                        <span class="material-icons-outlined">arrow_back</span>
+                    </a>
+                    <h1 class="header-title">{{ account.name }}</h1>
                 </div>
-                
-                <div class="filter-group">
-                    <select id="filter-category">
-                        <option value="">All Categories</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if request.args.get('category_id')|int == cat.id %}selected{% endif %}>{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button class="icon-btn" id="theme-switcher" title="Toggle Theme">
+                            <span class="material-icons-outlined icon-light-mode">light_mode</span>
+                            <span class="material-icons-outlined icon-dark-mode">dark_mode</span>
+                        </button>
+                        <a href="{{ url_for('logout') }}" class="logout-button" title="Logout">
+                            <span class="material-icons-outlined">logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-                    <select id="filter-type">
-                        <option value="">All Types</option>
-                        <option value="income" {% if request.args.get('type') == 'income' %}selected{% endif %}>Income</option>
-                        <option value="expense" {% if request.args.get('type') == 'expense' %}selected{% endif %}>Expense</option>
-                    </select>
+        <!-- ── Main Content ── -->
+        <main class="main-content details-page-container" data-account-id="{{ account.id }}">
+            <!-- Account Stats -->
+            <div class="details-stats-row">
+                <div class="details-stat-card balance-card">
+                    <span class="details-stat-label">Current Balance</span>
+                    <span class="details-stat-value">{{ current_user.currency }}{{ account.balance|format_number }}</span>
+                </div>
+                <div class="details-stat-card income-card">
+                    <span class="details-stat-label">Income (6mo)</span>
+                    <span class="details-stat-value positive">{{ current_user.currency }}{{ summary_stats.total_income|format_number }}</span>
+                </div>
+                <div class="details-stat-card expense-card">
+                    <span class="details-stat-label">Expense (6mo)</span>
+                    <span class="details-stat-value negative">{{ current_user.currency }}{{ summary_stats.total_expense|format_number }}</span>
+                </div>
+            </div>
 
-                    <input type="date" id="filter-start-date" placeholder="From" value="{{ request.args.get('start_date', '') }}">
-                    <input type="date" id="filter-end-date" placeholder="To" value="{{ request.args.get('end_date', '') }}">
-                    
-                    <button id="clear-filters-btn" class="icon-btn" title="Clear Filters">
-                        <span class="material-icons-outlined">filter_alt_off</span>
+            <!-- Chart Section -->
+            <div class="details-chart-card">
+                <h2 class="section-title">
+                    <span class="material-icons-outlined">bar_chart</span>
+                    Income vs Expense (6 Months)
+                </h2>
+                <div class="chart-wrapper details-chart-wrapper">
+                    <canvas id="details-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Filters & Transactions -->
+            <div class="details-transactions-card">
+                <div class="details-header-row">
+                    <h2 class="section-title">
+                        <span class="material-icons-outlined">receipt_long</span>
+                        Transactions
+                    </h2>
+                    <button class="button-primary button-sm" id="open-add-transaction-modal-btn" data-account-id="{{ account.id }}">
+                        <span class="material-icons-outlined">add</span>
+                        <span class="btn-label">Add Transaction</span>
                     </button>
                 </div>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar" id="filter-bar">
+                    <div class="filter-group">
+                        <input type="search" id="details-search" class="filter-input" placeholder="Search transactions..." autocomplete="off">
+                    </div>
+                    <div class="filter-group filter-row">
+                        <select id="filter-category" class="filter-select settings-input">
+                            <option value="">All Categories</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select id="filter-type" class="filter-select settings-input">
+                            <option value="">All Types</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div class="filter-group filter-row">
+                        <input type="date" id="filter-start-date" class="filter-input">
+                        <input type="date" id="filter-end-date" class="filter-input">
+                    </div>
+                    <div class="filter-group filter-row">
+                        <input type="number" id="filter-min-amount" class="filter-input" placeholder="Min amount" step="0.01">
+                        <input type="number" id="filter-max-amount" class="filter-input" placeholder="Max amount" step="0.01">
+                    </div>
+                </div>
+
+                <!-- Transaction List -->
+                <ul class="transactions-list" id="accounts-container" data-account-id="{{ account.id }}">
+                    {% include '_transaction_list.html' %}
+                </ul>
             </div>
-
-            <ul class="transactions-list transactions-list-detailed" id="transactions-list-ul">
-                {% include '_transaction_list.html' %}
-            </ul>
-        </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const filterInputs = {
-                search: document.getElementById('filter-search'),
-                category_id: document.getElementById('filter-category'),
-                type: document.getElementById('filter-type'),
-                start_date: document.getElementById('filter-start-date'),
-                end_date: document.getElementById('filter-end-date')
-            };
-            const clearBtn = document.getElementById('clear-filters-btn');
-            const listContainer = document.getElementById('transactions-list-ul');
-
-            function fetchTransactions() {
-                const params = new URLSearchParams();
-                for (const [key, input] of Object.entries(filterInputs)) {
-                    if (input.value) {
-                        params.append(key, input.value);
-                    }
-                }
-
-                const url = `${window.location.pathname}?${params.toString()}`;
-                
-                // Update URL without reloading
-                window.history.pushState({}, '', url);
-
-                fetch(url, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                .then(response => response.text())
-                .then(html => {
-                    listContainer.innerHTML = html;
-                    // Re-bind event listeners for edit/delete buttons if necessary 
-                    // (Assuming main.js handles delegation or we need to re-init)
-                })
-                .catch(err => console.error('Error fetching transactions:', err));
-            }
-
-            // Debounce function for text search
-            let timeout = null;
-            filterInputs.search.addEventListener('input', () => {
-                clearTimeout(timeout);
-                timeout = setTimeout(fetchTransactions, 300);
-            });
-
-            // Immediate fetch for other filters
-            [filterInputs.category_id, filterInputs.type, filterInputs.start_date, filterInputs.end_date].forEach(input => {
-                input.addEventListener('change', fetchTransactions);
-            });
-
-            clearBtn.addEventListener('click', () => {
-                Object.values(filterInputs).forEach(input => input.value = '');
-                fetchTransactions();
-            });
-        });
-    </script>
-    </main>
+        </main>
+    </div>
 
     {% include '_modals.html' %}
 
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const chartCanvas = document.getElementById('transactionChart');
-            if (!chartCanvas) return;
+        // Details page chart initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            const chartData = {{ chart_data | tojson }};
+            const ctx = document.getElementById('details-chart');
+            if (!ctx || !chartData.labels.length) return;
 
-            const ctx = chartCanvas.getContext('2d');
-            const chartData = JSON.parse('{{ chart_data | tojson | safe }}');
-            
             const styles = getComputedStyle(document.documentElement);
-            const primaryColor = styles.getPropertyValue('--primary').trim();
-            const destructiveColor = styles.getPropertyValue('--destructive').trim();
-            const gridColor = styles.getPropertyValue('--border').trim();
-            const textColor = styles.getPropertyValue('--muted-foreground').trim();
-
-            new Chart(ctx, {
+            new Chart(ctx.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: chartData.labels,
-                    datasets: [
-                        {
-                            label: 'Income',
-                            data: chartData.income,
-                            backgroundColor: primaryColor,
-                            borderColor: primaryColor,
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Expense',
-                            data: chartData.expense,
-                            backgroundColor: destructiveColor,
-                            borderColor: destructiveColor,
-                            borderWidth: 1
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Income',
+                        data: chartData.income,
+                        backgroundColor: 'hsla(152, 69%, 50%, 0.7)',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.6,
+                    }, {
+                        label: 'Expense',
+                        data: chartData.expense,
+                        backgroundColor: 'hsla(0, 72%, 55%, 0.7)',
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.6,
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: textColor },
-                            grid: { color: gridColor }
-                        },
-                        x: {
-                            ticks: { color: textColor },
-                            grid: { color: 'transparent' }
-                        }
-                    },
                     plugins: {
                         legend: {
-                            labels: { color: textColor }
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 15,
+                                color: styles.getPropertyValue('--muted-foreground').trim(),
+                                font: { family: "'Inter', sans-serif", size: 11 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: styles.getPropertyValue('--card').trim(),
+                            titleColor: styles.getPropertyValue('--foreground').trim(),
+                            bodyColor: styles.getPropertyValue('--foreground').trim(),
+                            titleFont: { family: "'Inter', sans-serif", size: 13, weight: '600' },
+                            bodyFont: { family: "'Inter', sans-serif", size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            borderColor: styles.getPropertyValue('--border').trim(),
+                            borderWidth: 1,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: styles.getPropertyValue('--muted-foreground').trim(),
+                                font: { family: "'Inter', sans-serif", size: 11 }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: styles.getPropertyValue('--border').trim(),
+                                drawBorder: false,
+                            },
+                            ticks: {
+                                color: styles.getPropertyValue('--muted-foreground').trim(),
+                                font: { family: "'Inter', sans-serif", size: 11 }
+                            }
                         }
                     }
                 }
             });
+
+            // AJAX filters
+            let debounce;
+            const filterInputs = document.querySelectorAll('#filter-bar input, #filter-bar select');
+            filterInputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(applyFilters, 400);
+                });
+                input.addEventListener('change', () => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(applyFilters, 100);
+                });
+            });
+
+            function applyFilters() {
+                const params = new URLSearchParams();
+                const search = document.getElementById('details-search').value.trim();
+                const categoryId = document.getElementById('filter-category').value;
+                const type = document.getElementById('filter-type').value;
+                const startDate = document.getElementById('filter-start-date').value;
+                const endDate = document.getElementById('filter-end-date').value;
+                const minAmount = document.getElementById('filter-min-amount').value;
+                const maxAmount = document.getElementById('filter-max-amount').value;
+
+                if (search) params.set('search', search);
+                if (categoryId) params.set('category_id', categoryId);
+                if (type) params.set('type', type);
+                if (startDate) params.set('start_date', startDate);
+                if (endDate) params.set('end_date', endDate);
+                if (minAmount) params.set('min_amount', minAmount);
+                if (maxAmount) params.set('max_amount', maxAmount);
+
+                fetch(`${window.location.pathname}?${params.toString()}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('accounts-container').innerHTML = html;
+                })
+                .catch(err => console.error('Filter error:', err));
+            }
         });
     </script>
-    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

@@ -1,50 +1,62 @@
-.currency-selector {
+.currency-selector-wrapper {
     position: relative;
+}
+
+#currency-selector-input {
     width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--secondary);
+    color: var(--foreground);
+    font-family: var(--font-family);
+    font-size: var(--text-base);
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+
+#currency-selector-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .currency-dropdown {
-    display: none;
     position: absolute;
-    top: calc(100% + 4px);
+    top: 100%;
     left: 0;
     right: 0;
-    z-index: 1010;
-    background-color: var(--background);
+    margin-top: var(--space-1);
+    background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: var(--z-dropdown);
     max-height: 200px;
     overflow-y: auto;
-    box-shadow: 0 8px 32px 0 var(--shadow-color);
+    display: none;
+    animation: fadeIn var(--duration-fast) var(--ease-out);
 }
 
 .currency-dropdown.visible {
     display: block;
 }
 
-.currency-item {
-    padding: 0.75rem 1rem;
+.currency-dropdown-item {
+    padding: var(--space-2) var(--space-3);
     cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background-color 0.2s ease;
+    font-size: var(--text-sm);
+    color: var(--foreground);
+    transition: background-color var(--duration-fast) var(--ease-out);
 }
 
-.currency-item:hover {
-    background-color: var(--secondary);
+.currency-dropdown-item:hover {
+    background: var(--secondary);
 }
 
-.currency-item.filtered-out {
-    display: none;
-}
-
-.currency-item .symbol {
-    font-weight: 600;
+.currency-dropdown-item.selected {
+    background: var(--primary-glow);
     color: var(--primary);
-}
-
-.currency-item .name {
-    color: var(--muted-foreground);
-    font-size: 13px;
+    font-weight: 500;
 }

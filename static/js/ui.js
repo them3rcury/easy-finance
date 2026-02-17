@@ -40,7 +40,7 @@ export function showErrorToast(message) {
 
 function createAccountElement(account, currencySymbol) {
     const div = document.createElement('div');
-    div.className = 'account';
+    div.className = 'account-card';
     div.dataset.accountId = account.id;
     div.dataset.accountName = account.name.toLowerCase();
 
@@ -53,7 +53,7 @@ function createAccountElement(account, currencySymbol) {
             <li class="transaction-item" data-transaction-description="${t.description.toLowerCase()}" data-transaction-category="${(t.category || '').toLowerCase()}">
                 <div class="transaction-details">
                     <span class="transaction-description">${t.description}</span>
-                    <span class="transaction-date">${t.category} &middot; ${transactionDate}</span>
+                    <span class="transaction-meta">${t.category} &middot; ${transactionDate}</span>
                 </div>
                 <div class="transaction-amount ${amountClass}">${currencySymbol}${formattedAmount}</div>
                 <div class="transaction-actions">
@@ -72,15 +72,11 @@ function createAccountElement(account, currencySymbol) {
         `;
     }).join('');
 
+    const balanceClass = account.balance >= 0 ? 'positive' : 'negative';
     div.innerHTML = `
-        <div class="account-header">
-            <a href="/account/${account.id}" class="account-details-link" title="View Details">
-                <h3>
-                    <span class="material-icons-outlined">account_balance_wallet</span>
-                    <span>${account.name}</span>
-                </h3>
-            </a>
-            <div class="account-balance">${currencySymbol}${formatNumber(account.balance)}</div>
+        <div class="account-card-header">
+            <a href="/account/${account.id}" class="account-name" title="View Details">${account.name}</a>
+            <span class="account-type-badge">${account.type}</span>
             <div class="account-actions">
                 <button class="icon-btn add-transaction-to-account-btn" data-account-id="${account.id}" title="Add Transaction">
                     <span class="material-icons-outlined">add</span>
@@ -93,14 +89,18 @@ function createAccountElement(account, currencySymbol) {
                 </button>
             </div>
         </div>
-        <ul class="transactions-list" data-account-id="${account.id}">${transactionsList}</ul>
-        ${account.transactions.length > 0 ? `
-        <div class="view-all-container">
-            <a href="/account/${account.id}" class="view-all-btn">
-                <span>View All</span>
-                <span class="material-icons-outlined">arrow_forward</span>
-            </a>
-        </div>` : ''}
+        <div class="account-balance">
+            <span class="account-balance-label">Balance</span>
+            <span class="account-balance-value ${balanceClass}">${currencySymbol}${formatNumber(account.balance)}</span>
+        </div>
+        <div class="account-transactions">
+            <div class="account-transactions-title">
+                <span>Recent Transactions</span>
+                ${account.transactions.length > 0 ? `<a href="/account/${account.id}" class="view-all-link">View All</a>` : ''}
+            </div>
+            <ul data-account-id="${account.id}">${transactionsList}</ul>
+        </div>
+
     `;
     return div;
 }
@@ -128,6 +128,10 @@ export function renderSummary(summaryData, currencySymbol) {
     document.querySelector('#total-expense-card p').textContent = `${currencySymbol}${formatNumber(summaryStats.totalExpense)}`;
     document.querySelector('#total-balance-card p').textContent = `${currencySymbol}${formatNumber(summaryStats.totalBalance)}`;
 
+    // Show the charts row
+    const chartsRow = document.querySelector('.dashboard-charts-row');
+    if (chartsRow) chartsRow.style.display = '';
+
     const recentList = document.getElementById('recent-transactions-list');
     recentList.innerHTML = recentTransactions.map(t => {
          const amountClass = t.amount >= 0 ? 'positive' : 'negative';
@@ -137,7 +141,7 @@ export function renderSummary(summaryData, currencySymbol) {
             <li class="transaction-item">
                 <div class="transaction-details">
                     <span class="transaction-description">${t.description}</span>
-                    <span class="transaction-date">${t.category}</span>
+                    <span class="transaction-meta">${t.category} &middot; ${transactionDate}</span>
                 </div>
                 <div class="transaction-amount ${amountClass}">${currencySymbol}${formattedAmount}</div>
             </li>
@@ -211,17 +215,7 @@ export function renderSummary(summaryData, currencySymbol) {
             cutout: '75%',
             plugins: {
                 legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 15,
-                        color: styles.getPropertyValue('--muted-foreground').trim(),
-                        font: {
-                            family: "'Inter', sans-serif",
-                            size: 11
-                        }
-                    }
+                    display: false  // We use custom HTML legend
                 },
                 tooltip: {
                     backgroundColor: styles.getPropertyValue('--card').trim().replace('0.6', '0.98'),
@@ -255,12 +249,38 @@ export function renderSummary(summaryData, currencySymbol) {
             }
         }
     });
+
+    // Build custom HTML legend
+    const legendContainer = document.getElementById('expense-chart-legend');
+    if (legendContainer) {
+        const total = expenseBreakdown.reduce((s, e) => s + e.total, 0);
+        legendContainer.innerHTML = expenseBreakdown.map((e, i) => {
+            const pct = total > 0 ? ((e.total / total) * 100).toFixed(1) : 0;
+            return `<button class="chart-legend-item" data-index="${i}" title="${e.category}: ${currencySymbol}${formatNumber(e.total)} (${pct}%)">
+                <span class="chart-legend-dot" style="background:${chartColors[i]}"></span>
+                <span class="chart-legend-label">${e.category}</span>
+                <span class="chart-legend-pct">${pct}%</span>
+            </button>`;
+        }).join('');
+
+        // Toggle dataset visibility on click
+        legendContainer.querySelectorAll('.chart-legend-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.index);
+                const meta = expenseChart.getDatasetMeta(0);
+                const isHidden = meta.data[idx].hidden;
+                meta.data[idx].hidden = !isHidden;
+                btn.classList.toggle('hidden', !isHidden);
+                expenseChart.update();
+            });
+        });
+    }
 }
 
 
 export function handleSearch(query, noResultsMessage) {
     let hasVisibleAccounts = false;
-    document.querySelectorAll('.account').forEach(account => {
+    document.querySelectorAll('.account-card').forEach(account => {
         const accountName = account.dataset.accountName;
         let accountHasVisibleTransactions = false;
 

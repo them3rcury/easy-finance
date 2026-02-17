@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.classList.add('active');
             
             document.querySelectorAll('[data-view-panel]').forEach(panel => {
-                panel.style.display = panel.dataset.viewPanel === view ? '' : 'none';
+                panel.style.display = panel.dataset.viewPanel === view ? 'block' : 'none';
             });
         });
     });

@@ -1,99 +1,139 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-color-scheme="default">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Easy Finance — Dashboard</title>
+    <meta name="description" content="Your personal finance dashboard — track accounts, transactions, and spending.">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', savedTheme);
-
-            const savedDensity = localStorage.getItem('dashboardDensity') || 'default';
-            document.body.setAttribute('data-density', savedDensity);
-            
-            const savedColorScheme = localStorage.getItem('dashboardColorScheme') || 'default';
-            document.documentElement.setAttribute('data-color-scheme', savedColorScheme);
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', savedTheme || (prefersDark ? 'dark' : 'light'));
+            const savedDensity = localStorage.getItem('density');
+            if (savedDensity) document.documentElement.setAttribute('data-density', savedDensity);
+            const savedColorScheme = localStorage.getItem('color-scheme');
+            if (savedColorScheme) document.documentElement.setAttribute('data-color-scheme', savedColorScheme);
         })();
     </script>
 </head>
 <body>
-    <header>
-        <h1 id="dashboard-title">My Dashboard</h1>
-        <div class="search-container">
-            <span class="material-icons-outlined">search</span>
-            <input type="search" id="search-bar" placeholder="Search transactions...">
-        </div>
-        <div class="header-actions">
-            <button id="theme-switcher" class="icon-btn" title="Toggle Theme">
-                <span class="material-icons-outlined icon-light-mode">light_mode</span>
-                <span class="material-icons-outlined icon-dark-mode">dark_mode</span>
-            </button>
-            <button id="open-add-account-modal-btn" class="icon-btn" title="Add New Account">
-                <span class="material-icons-outlined">add</span>
-            </button>
-            <button id="open-recurring-modal-btn" class="icon-btn" title="Manage Recurring">
-                <span class="material-icons-outlined">event_repeat</span>
-            </button>
-            <button id="open-categories-modal-btn" class="icon-btn" title="Manage Categories">
-                <span class="material-icons-outlined">category</span>
-            </button>
-            <button id="open-import-modal-btn" class="icon-btn" title="Import Data">
-                <span class="material-icons-outlined">upload</span>
-            </button>
-            <button id="open-settings-modal-btn" class="icon-btn" title="Settings">
-                <span class="material-icons-outlined">settings</span>
-            </button>
-            <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
-        </div>
-    </header>
+    <div class="app-container">
+        <!-- ── Header ── -->
+        <header class="app-header" id="app-header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <h1 class="header-title" id="dashboard-title">Easy Finance</h1>
+                </div>
+                <div class="header-right">
+                    <div class="search-container" id="search-container">
+                        <span class="material-icons-outlined search-icon">search</span>
+                        <input type="search" id="search-bar" placeholder="Search accounts & transactions..." autocomplete="off">
+                    </div>
+                    <div class="header-actions">
+                        <button class="icon-btn" id="open-categories-modal-btn" title="Categories">
+                            <span class="material-icons-outlined">category</span>
+                        </button>
+                        <button class="icon-btn" id="open-recurring-modal-btn" title="Recurring">
+                            <span class="material-icons-outlined">event_repeat</span>
+                        </button>
+                        <button class="icon-btn" id="open-import-modal-btn" title="Import">
+                            <span class="material-icons-outlined">upload_file</span>
+                        </button>
+                        <button class="icon-btn" id="open-settings-modal-btn" title="Settings">
+                            <span class="material-icons-outlined">tune</span>
+                        </button>
+                        <button class="icon-btn" id="theme-switcher" title="Toggle Theme">
+                            <span class="material-icons-outlined icon-light-mode">light_mode</span>
+                            <span class="material-icons-outlined icon-dark-mode">dark_mode</span>
+                        </button>
+                        <a href="{{ url_for('logout') }}" class="logout-button" title="Logout">
+                            <span class="material-icons-outlined">logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-    <div class="dashboard-summary-grid">
-        <div class="summary-cards-container">
-            <div class="stat-card" id="total-income-card">
-                <h4>Total Income</h4>
-                <p class="positive">$0.00</p>
-                <small>Last 30 days</small>
+        <!-- ── Main Content ── -->
+        <main class="main-content">
+            <!-- Summary Cards -->
+            <div class="dashboard-summary-grid" style="display: none;">
+                <div class="summary-card balance-card" id="total-balance-card">
+                    <div class="summary-card-icon">
+                        <span class="material-icons-outlined">account_balance_wallet</span>
+                    </div>
+                    <div class="summary-card-content">
+                        <span class="summary-card-label">Total Balance</span>
+                        <p class="summary-card-value">$0.00</p>
+                    </div>
+                </div>
+                <div class="summary-card income-card" id="total-income-card">
+                    <div class="summary-card-icon">
+                        <span class="material-icons-outlined">trending_up</span>
+                    </div>
+                    <div class="summary-card-content">
+                        <span class="summary-card-label">Monthly Income</span>
+                        <p class="summary-card-value">$0.00</p>
+                    </div>
+                </div>
+                <div class="summary-card expense-card" id="total-expense-card">
+                    <div class="summary-card-icon">
+                        <span class="material-icons-outlined">trending_down</span>
+                    </div>
+                    <div class="summary-card-content">
+                        <span class="summary-card-label">Monthly Expense</span>
+                        <p class="summary-card-value">$0.00</p>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card" id="total-expense-card">
-                <h4>Total Expense</h4>
-                <p class="negative">$0.00</p>
-                <small>Last 30 days</small>
+
+            <!-- Expense Chart & Recent Transactions -->
+            <div class="dashboard-charts-row" style="display: none;">
+                <div class="chart-card">
+                    <h2 class="section-title">
+                        <span class="material-icons-outlined">donut_large</span>
+                        Expense Breakdown
+                    </h2>
+                    <div class="chart-wrapper">
+                        <canvas id="expense-chart"></canvas>
+                    </div>
+                    <div class="chart-legend" id="expense-chart-legend"></div>
+                </div>
+                <div class="recent-transactions-card">
+                    <h2 class="section-title">
+                        <span class="material-icons-outlined">receipt_long</span>
+                        Recent Transactions
+                    </h2>
+                    <ul class="transactions-list" id="recent-transactions-list"></ul>
+                </div>
             </div>
-            <div class="stat-card" id="total-balance-card">
-                <h4>Total Balance</h4>
-                <p>$0.00</p>
-                <small>Across all accounts</small>
+
+            <!-- Accounts Section -->
+            <div class="accounts-section">
+                <div class="accounts-section-header">
+                    <h2 class="section-title">
+                        <span class="material-icons-outlined">credit_card</span>
+                        My Accounts
+                    </h2>
+                    <button class="button-primary button-sm" id="open-add-account-modal-btn">
+                        <span class="material-icons-outlined">add</span>
+                        <span class="btn-label">Add Account</span>
+                    </button>
+                </div>
+                <div id="accounts-container" class="accounts-grid"></div>
+                <div id="no-results-message" class="no-results-message">
+                    <span class="material-icons-outlined" style="font-size: 48px; display: block; margin-bottom: 0.5rem;">search_off</span>
+                    No accounts or transactions match your search.
+                </div>
             </div>
-        </div>
-        <div class="account" id="recent-transactions-container">
-            <h4>Recent Transactions</h4>
-            <ul class="transactions-list" id="recent-transactions-list"></ul>
-        </div>
-        <div class="account" id="expense-breakdown-container">
-            <h4>Expense Breakdown</h4>
-            <div class="chart-wrapper">
-                <canvas id="expense-chart"></canvas>
-            </div>
-        </div>
+        </main>
     </div>
 
-    <main class="dashboard-container" id="accounts-container"></main>
-
-    <div id="no-results-message" style="display: none;">
-        <h2>No Results Found</h2>
-        <p>Try a different search term.</p>
-    </div>
-    
     {% include '_modals.html' %}
-    
+
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

@@ -1,194 +1,321 @@
-.account {
-    background-color: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    box-shadow: 0 4px 16px var(--shadow-color);
-    animation: fadeInSlideUp 0.5s ease-out forwards;
-    opacity: 0;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* ── Accounts Section ── */
+.accounts-section {
+    animation: fadeInSlideUp var(--duration-slow) var(--ease-out) 200ms both;
 }
 
-.account:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px var(--shadow-color);
-}
-
-.account-header {
+.accounts-section-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    padding-bottom: 0.75rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-    position: relative; /* Added for absolute positioning of actions */
+    margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+    gap: var(--space-3);
 }
 
-.account-header h3 {
+.accounts-section-header .section-title {
+    margin-bottom: 0;
+}
+
+/* ── Grid Layout ── */
+.accounts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+}
+
+@media (min-width: 600px) {
+    .accounts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .accounts-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ── Account Card ── */
+.account-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--duration-normal) var(--ease-spring),
+                box-shadow var(--duration-normal) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
+    animation: fadeInSlideUp var(--duration-slow) var(--ease-out) both;
+}
+
+.account-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    border-color: var(--primary-glow);
+}
+
+/* Staggered animation */
+.account-card:nth-child(1) { animation-delay: 50ms; }
+.account-card:nth-child(2) { animation-delay: 100ms; }
+.account-card:nth-child(3) { animation-delay: 150ms; }
+.account-card:nth-child(4) { animation-delay: 200ms; }
+.account-card:nth-child(5) { animation-delay: 250ms; }
+.account-card:nth-child(6) { animation-delay: 300ms; }
+
+/* ── Card Header ── */
+.account-card-header {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin: 0;
-    font-size: 18px;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-4) var(--space-3);
+    gap: var(--space-2);
+}
+
+.account-name {
+    font-size: var(--text-md);
     font-weight: 600;
-    word-break: break-all;
-}
-
-.account-header a.account-details-link {
-    text-decoration: none;
-    color: inherit;
-    transition: color 0.2s ease-in-out;
-}
-
-.account-header a.account-details-link:hover {
-    color: var(--primary);
-}
-
-.account-header .material-icons-outlined {
-    font-size: 22px;
-    color: var(--muted-foreground);
-}
-
-.account-balance {
-    font-size: 1.25rem;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-    text-align: right;
-    margin-left: auto;
-    padding: 0 1rem;
+    color: var(--foreground);
+    letter-spacing: -0.3px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.account-type-badge {
+    font-size: var(--text-xs);
+    padding: 2px 8px;
+    background: var(--secondary);
+    color: var(--muted-foreground);
+    border-radius: var(--radius-full);
+    font-weight: 500;
+    text-transform: capitalize;
+    flex-shrink: 0;
 }
 
 .account-actions {
     display: flex;
+    gap: var(--space-1);
+    flex-shrink: 0;
+}
+
+.account-actions button {
+    display: flex;
     align-items: center;
-    gap: 0.25rem;
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out, max-width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    max-width: 0;
-    overflow: hidden;
-    position: absolute; /* Absolute positioning to prevent layout shift */
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%); /* Vertically center */
-    background-color: var(--card); /* Match background */
-    backdrop-filter: blur(4px); /* improve readability over text */
-    padding-left: 0.5rem; /* Space from text if overlap */
-    border-radius: var(--radius); /* Rounded corners */
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
 }
 
-.account:hover .account-actions {
-    opacity: 1;
-    max-width: 150px;
+.account-actions button:hover {
+    background: var(--secondary);
+    color: var(--foreground);
 }
 
-.transactions-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.account-actions .delete-account-btn:hover {
+    background: var(--destructive-glow);
+    color: var(--destructive);
+}
+
+.account-actions button .material-icons-outlined {
+    font-size: 18px;
+}
+
+/* ── Balance Display ── */
+.account-balance {
+    padding: 0 var(--space-4) var(--space-3);
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex-grow: 1;
+    align-items: baseline;
+    gap: var(--space-2);
 }
 
-.transaction-item {
+.account-balance-label {
+    font-size: var(--text-xs);
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.account-balance-value {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--foreground);
+}
+
+.account-balance-value.positive { color: var(--success); }
+.account-balance-value.negative { color: var(--destructive); }
+
+/* ── Transaction List (inside card) ── */
+.account-transactions {
+    border-top: 1px solid var(--border-subtle);
+    padding: var(--space-3) var(--space-4);
+}
+
+.account-transactions-title {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    padding: 0.6rem 0.5rem;
-    border-radius: var(--radius);
-    transition: all 0.2s ease-in-out;
-    position: relative; /* Added for absolute positioning of actions */
+    margin-bottom: var(--space-2);
 }
 
-.transaction-item:hover {
-    background-color: var(--secondary);
+.account-transactions-title span {
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.transaction-details {
+.view-all-link {
+    font-size: var(--text-xs);
+    color: var(--primary);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out);
+}
+
+.view-all-link:hover {
+    color: var(--primary-hover);
+}
+
+.account-transactions ul {
+    list-style: none;
+}
+
+.account-transactions .transaction-item {
     display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    flex-grow: 1;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+    gap: var(--space-2);
+}
+
+.account-transactions .transaction-item:not(:last-child) {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.account-transactions .transaction-details {
+    flex: 1;
     min-width: 0;
 }
 
-.transaction-description {
+.account-transactions .transaction-description {
+    font-size: var(--text-sm);
     font-weight: 500;
+    color: var(--foreground);
+    display: block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.transaction-date {
-    font-size: 12px;
+.account-transactions .transaction-meta {
+    font-size: var(--text-xs);
     color: var(--muted-foreground);
+    display: flex;
+    gap: var(--space-2);
+    margin-top: 1px;
 }
 
-.transaction-amount {
-    font-weight: 500;
-    padding-left: 1rem;
-    font-feature-settings: "tnum";
+.account-transactions .transaction-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+.account-transactions .transaction-amount {
+    font-size: var(--text-sm);
+    font-weight: 600;
     white-space: nowrap;
 }
 
-.transaction-amount.positive {
-    color: var(--primary);
-}
-
-html[data-theme='light'] .transaction-amount.positive {
-    color: hsl(140, 50%, 45%);
-}
-
-.transaction-amount.negative {
-    color: var(--destructive);
-}
+.transaction-amount.positive { color: var(--success); }
+.transaction-amount.negative { color: var(--destructive); }
 
 .transaction-actions {
     display: flex;
-    align-items: center;
-    gap: 0.25rem;
+    gap: var(--space-1);
     opacity: 0;
-    /* margin-left: 0.5rem; Removed margin-left as it is absolute now */
-    transition: opacity 0.2s ease-in-out, max-width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    max-width: 0;
-    overflow: hidden;
-    position: absolute; /* Absolute positioning */
-    right: 0.5rem; /* Match padding */
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: var(--secondary); /* Match hover background */
-    padding-left: 0.5rem;
-    border-radius: var(--radius);
+    transition: opacity var(--duration-fast) var(--ease-out);
 }
 
-.transaction-item:hover .transaction-actions {
+.account-transactions .transaction-item:hover .transaction-actions,
+.details-page-container .transaction-item:hover .transaction-actions {
     opacity: 1;
-    max-width: 100px;
 }
 
-.view-all-container {
-    padding-top: 1rem;
-    margin-top: 1rem;
-    border-top: 1px solid var(--border);
-    text-align: center;
+/* Always visible on mobile */
+@media (max-width: 768px) {
+    .transaction-actions {
+        opacity: 1;
+    }
 }
 
-.view-all-btn {
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 14px;
-    display: inline-flex;
+.transaction-actions button {
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease-in-out;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
 }
 
-.view-all-btn:hover {
-    color: var(--ring);
-    gap: 0.75rem;
+.transaction-actions button:hover {
+    background: var(--secondary);
+    color: var(--foreground);
+}
+
+.transaction-actions .delete-transaction-btn:hover {
+    background: var(--destructive-glow);
+    color: var(--destructive);
+}
+
+.transaction-actions button .material-icons-outlined {
+    font-size: 16px;
+}
+
+/* ── Add Transaction Button (in card footer) ── */
+.account-card-footer {
+    padding: var(--space-2) var(--space-4) var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.add-transaction-to-account-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--muted-foreground);
+    font-size: var(--text-sm);
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.add-transaction-to-account-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-glow);
+}
+
+.add-transaction-to-account-btn .material-icons-outlined {
+    font-size: 18px;
 }

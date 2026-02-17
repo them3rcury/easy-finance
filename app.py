@@ -33,6 +33,15 @@ def parse_turkish_amount(amount_str):
         return 0.0
 
 app = Flask(__name__)
+
+@app.template_filter('format_number')
+def format_number_filter(value):
+    """Format a number with 2 decimal places and thousands separator."""
+    try:
+        return f"{float(value):,.2f}"
+    except (ValueError, TypeError):
+        return "0.00"
+
 app.config['SECRET_KEY'] = 'a-very-secret-key-that-you-should-change'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dashboard.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
